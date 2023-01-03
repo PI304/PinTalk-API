@@ -1,0 +1,21 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    background-color: rgb(174, 229, 213);
+}
+
+#root {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#container {
+    width: 80%;
+    height: 80%;
+    border-radius: 2rem;
+    background-color: white;
+    padding: 2rem;
+}
