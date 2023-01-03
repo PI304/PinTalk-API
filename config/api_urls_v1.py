@@ -49,7 +49,8 @@ def hello_world(request: Request) -> Response:
 urlpatterns = [
     path("", hello_world),
     path("admin/", admin.site.urls),
-    # path("users/", include("apps.user.urls")),
+    path("auth/", include("apps.user.auth_urls")),
+    path("users/", include("apps.user.urls")),
     path("api-auth/", include("rest_framework.urls")),
 ]
 
