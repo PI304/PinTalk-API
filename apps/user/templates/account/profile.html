@@ -1,13 +1,42 @@
-{% load tailwind_tags %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Page</title>
-    {% tailwind_css %}
-</head>
-<body>
+{% extends "account/base.html" %}
+{% load static %}
+{% load i18n %}
+{% load account %}
+
+{%  block extrahead %}
+<title>마이페이지</title>
+{% endblock extrahead %}
+
+{% block content %}
+    {% user_display user as user_display %}
     <h1 class="text-5xl">My Page</h1>
-    <button>로그아웃</button>
-</body>
-</html>
+
+    <h3>내 정보</h3>
+    <ul>
+        <li>이메일: {{ user_display }}</li>
+        <li>서비스 이름: {{ user_info.service_name }}</li>
+        <li>서비스 설명: {{ user_info.service_expl }}</li>
+        <li>최근 수정일자: {{ user_info.updated_at }}</li>
+        <li>가입일자: {{ user_info.created_at }}</li>
+    </ul>
+    <br />
+    <h3>Keys</h3>
+    <ul>
+        <li>access key: <button class="button" type="button" onclick="copyToClipboard(this)" value="{{ user_info.access_key }}">복사하기</button></li>
+        <li>secret key: <button class="button" type="button" onclick="copyToClipboard(this)" value="{{ user_info.secret_key }}">복사하기</button></li>
+    </ul>
+    <br />
+
+{#    <button type="button" onclick="openPopup({% url 'account_password_change' %}, 'password-change')">비밀번호 변경</button>#}
+
+    <form method="post" action="{% url 'account_logout' %}">
+      {% csrf_token %}
+      {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+      {% endif %}
+      <button type="submit">Logout</button>
+    </form>
+{% endblock content %}
+{% block scripts %}
+    <script type="text/javascript" src="{% static 'user/js/profile.js' %}"></script>
+{% endblock scripts %}
