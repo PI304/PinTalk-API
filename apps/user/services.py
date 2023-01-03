@@ -1,6 +1,10 @@
+import datetime
+import string
 import uuid
 import base64
 import secrets
+import random
+
 from rest_framework.request import Request
 
 from apps.user.models import User
@@ -11,10 +15,24 @@ class UserService(object):
         self.user = user
         self.request = request
 
+    def deactivate_user(self):
+        self.user.is_deleted = True
+        self.user.updated_at = datetime.datetime.now()
+        self.user.save(updated_field=["is_deleted", "updated_at"])
+        return self.user
+
     @staticmethod
     def generate_access_key():
-        return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf8').rstrip('=\n')
+        return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf8").rstrip("=\n")
 
     @staticmethod
     def generate_secret_key():
         return secrets.token_hex(32)
+
+    @staticmethod
+    def generate_random_code(number_of_strings, length_of_string):
+        for x in range(number_of_strings):
+            return "".join(
+                random.choice(string.ascii_letters + string.digits)
+                for _ in range(length_of_string)
+            )
