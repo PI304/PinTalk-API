@@ -1,0 +1,5 @@
+redis:
+    image: redis:alpine
+    command: redis-server --port 6379
+    ports:
+      - 6379:6379
