@@ -8,4 +8,5 @@ urlpatterns = [
     path("account/", include("allauth.urls")),
     path("home/", home_view, name="home"),
     path("profile/", profile_view, name="profile"),
+    path("chat/", include("apps.chat.html_urls")),
 ]

@@ -59,10 +59,12 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "tailwind",
     "django_browser_reload",
+    "channels_redis",
 ]
 
 
 DJANGO_CORE_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -165,6 +167,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("redis", 6379)],
+        },
+    },
+}
 
 # Authentication Backend
 AUTHENTICATION_BACKENDS = [
