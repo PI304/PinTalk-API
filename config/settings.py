@@ -43,22 +43,13 @@ ALLOWED_HOSTS = []
 CHATBOX_APPS = [
     "apps.user",
     "apps.chat",
-    "apps.theme",
 ]
 
 THIRD_PARTY_APPS = [
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    # "allauth.socialaccount.providers.google",
-    # "allauth.socialaccount.providers.kakao",
-    # "allauth.socialaccount.providers.naver",
     "drf_yasg",
     "rest_framework",
     "django_extensions",
     "django_filters",
-    "tailwind",
-    "django_browser_reload",
     "channels_redis",
 ]
 
@@ -70,10 +61,11 @@ DJANGO_CORE_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.sites",
     "django.contrib.staticfiles",
 ]
 
-INSTALLED_APPS = DJANGO_CORE_APPS + CHATBOX_APPS + THIRD_PARTY_APPS
+INSTALLED_APPS = DJANGO_CORE_APPS + THIRD_PARTY_APPS + CHATBOX_APPS
 
 AUTH_USER_MODEL = "user.User"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
@@ -81,18 +73,6 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 LOGIN_REDIRECT_URL = "/profile"
-
-# AllAuth
-ACCOUNT_FORMS = {
-    "login": "apps.user.forms.CustomLoginForm",
-    "signup": "apps.user.forms.CustomSignupForm",
-    "add_email": "allauth.account.forms.AddEmailForm",
-    "change_password": "allauth.account.forms.ChangePasswordForm",
-    "set_password": "allauth.account.forms.SetPasswordForm",
-    "reset_password": "allauth.account.forms.ResetPasswordForm",
-    "reset_password_from_key": "allauth.account.forms.ResetPasswordKeyForm",
-    "disconnect": "allauth.socialaccount.forms.DisconnectForm",
-}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -102,7 +82,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
     "config.middlewares.add_headers.AddHeaders",
     "config.middlewares.request_middleware.RequestMiddleware",
 ]
@@ -143,17 +122,14 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "version",
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     "http://localhost:3000",
+# ]
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [
-            os.path.join(BASE_DIR, "templates"),
-            os.path.join(BASE_DIR, "templates", "allauth"),
-        ],
+        "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -172,18 +148,10 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("redis", 6379)],
+            "hosts": [("127.0.0.1", 6379)],
         },
     },
 }
-
-# Authentication Backend
-AUTHENTICATION_BACKENDS = [
-    # Needed to login by username in Django admin, regardless of `allauth`
-    "django.contrib.auth.backends.ModelBackend",
-    # `allauth` specific authentication methods, such as login by e-mail
-    "allauth.account.auth_backends.AuthenticationBackend",
-]
 
 
 # Database
@@ -213,12 +181,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
-]
-
-TAILWIND_APP_NAME = "theme"
-
-INTERNAL_IPS = [
-    "127.0.0.1",
 ]
 
 # Email Backend
