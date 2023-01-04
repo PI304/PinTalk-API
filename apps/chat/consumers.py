@@ -1,26 +1,32 @@
 import json
 
-from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 
-class ChatConsumer(AsyncWebsocketConsumer):
+class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
 
-        # Join room group
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-
-        await self.accept()
+        try:
+            # Join room group
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.accept()
+        except Exception as e:
+            print("Websocket Connection Failed")
 
     async def disconnect(self, close_code):
-        # Leave room group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        try:
+            # Leave room group
+            await self.channel_layer.group_discard(
+                self.room_group_name, self.channel_name
+            )
+        except Exception as e:
+            print("Failed to leave group")
 
     # Receive message from WebSocket
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
+    async def receive_json(self, content, **kwargs):
+        message = content["message"]
 
         # Send message to room group
         await self.channel_layer.group_send(
@@ -29,7 +35,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # Receive message from room group
     async def chat_message(self, event):
-        message = event["message"]
-
+        print("save")
         # Send message to WebSocket
-        await self.send(text_data=json.dumps({"message": message}))
+        await self.send_json(event)

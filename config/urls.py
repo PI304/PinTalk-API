@@ -24,7 +24,5 @@ def health_check_view(request):
 
 urlpatterns = [
     path("health-check", health_check_view, name="health-check"),
-    path("", include("apps.user.html_urls")),
     re_path(r"^api/", include("config.api_urls_v1")),
-    path("__reload__/", include("django_browser_reload.urls")),
 ]
