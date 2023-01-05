@@ -6,10 +6,11 @@ from apps.user.models import User, TimeStampMixin
 class Chatroom(TimeStampMixin):
     id = models.BigAutoField(primary_key=True)
     host = models.ForeignKey(User, on_delete=models.CASCADE)
-    visitor = models.CharField(max_length=20, null=False, blank=True, default="Guest")
-    latest_msg = models.ForeignKey(
-        "ChatMessage", on_delete=models.DO_NOTHING, related_name="latest_msg"
-    )
+    guest = models.CharField(max_length=20, null=False, blank=False)
+    name = models.CharField(max_length=50, null=False, blank=False)
+    # latest_msg = models.ForeignKey(
+    #     "ChatMessage", on_delete=models.DO_NOTHING, related_name="latest_msg"
+    # )
 
     class Meta:
         db_table = "chatroom"
