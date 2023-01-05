@@ -51,6 +51,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("auth/", include("apps.user.auth_urls")),
     path("users/", include("apps.user.urls")),
+    path("chat/", include("apps.chat.urls")),
     path("api-auth/", include("rest_framework.urls")),
 ]
 

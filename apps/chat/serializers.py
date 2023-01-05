@@ -20,9 +20,9 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 class ChatroomSerializer(serializers.ModelSerializer):
     host = UserSerializer(read_only=True)
-    last_message = ChatMessageSerializer(read_only=True)
+    # last_message = ChatMessageSerializer(read_only=True)
 
     class Meta:
         model = Chatroom
-        fields = ["id", "host", "visitor", "last_message", "created_at", "updated_at"]
-        read_only_fields = ["id", "host", "visitor", "created_at", "updated_at"]
+        fields = ["id", "host", "guest", "name", "created_at", "updated_at"]
+        read_only_fields = ["id", "host", "name", "created_at", "updated_at"]
