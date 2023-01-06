@@ -86,6 +86,7 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     access_key = models.CharField(max_length=22, null=False, blank=False)
     secret_key = models.CharField(max_length=64, null=False, blank=False)
     service_name = models.CharField(max_length=50, null=False, blank=False)
+    service_domain = models.CharField(max_length=200, null=True, blank=False)
     service_expl = models.CharField(max_length=200, null=False, blank=False)
     profile_name = models.CharField(max_length=50, null=False, blank=True, default="")
     description = models.CharField(max_length=200, null=False, blank=True, default="")
