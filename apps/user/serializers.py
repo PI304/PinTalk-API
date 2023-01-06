@@ -15,6 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
             "secret_key",
             "service_name",
             "service_expl",
+            "service_domain",
             "is_deleted",
             "created_at",
             "updated_at",

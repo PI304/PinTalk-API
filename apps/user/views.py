@@ -24,11 +24,14 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                "profile_name": openapi.Schema(
+                "profileName": openapi.Schema(
                     type=openapi.TYPE_STRING, description="채팅 프로필 이름"
                 ),
                 "description": openapi.Schema(
                     type=openapi.TYPE_STRING, description="채팅 프로필 상태 메세지"
+                ),
+                "serviceDomain": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="운영하려는 사이트의 도메인"
                 ),
             },
         ),
