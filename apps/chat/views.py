@@ -33,7 +33,7 @@ class ChatroomView(generics.ListCreateAPIView):
         try:
             user = get_object_or_404(User, id=self.kwargs.get("pk"))
         except Http404:
-            raise InstanceNotFound("User with the proviede id does not exist")
+            raise InstanceNotFound("User with the provided id does not exist")
 
         queryset = self.queryset.filter(host_id=user.id)
         return queryset
@@ -85,3 +85,24 @@ class ChatroomView(generics.ListCreateAPIView):
                 name=f"{host_user.service_name}:{request.data.get('guest')}",
             )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ChatroomDestroyView(generics.DestroyAPIView):
+    serializer_class = ChatroomSerializer
+    queryset = Chatroom.objects.all()
+
+    def get_object(self):
+        try:
+            chatroom = get_object_or_404(
+                Chatroom, host_id=self.kwargs.get("pk"), guest=self.kwargs.get("guest")
+            )
+        except Http404:
+            raise InstanceNotFound(
+                "Chatroom with the provided id and guest name does not exist"
+            )
+
+        return chatroom
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        # TODO: redis 에 관련 데이터 지우기
