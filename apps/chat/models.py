@@ -16,10 +16,10 @@ class Chatroom(TimeStampMixin):
         db_table = "chatroom"
 
     def __str__(self):
-        return f"[{self.id}] {self.host}-{self.visitor}"
+        return f"[{self.id}] {self.host}-{self.guest}"
 
     def __repr__(self):
-        return f"Chatroom({self.id}, {self.host}, {self.visitor})"
+        return f"Chatroom({self.id}, {self.host}, {self.guest})"
 
 
 class ChatMessage(TimeStampMixin):
