@@ -9,6 +9,7 @@ from rest_framework.response import Response
 
 from apps.chat.models import Chatroom
 from apps.chat.serializers import ChatroomSerializer
+from apps.chat.services import ChatroomService
 from apps.user.models import User
 from config.exceptions import InstanceNotFound
 
@@ -58,6 +59,7 @@ class ChatroomView(generics.ListCreateAPIView):
         },
     )
     def post(self, request, *args, **kwargs):
+        # TODO: 중복 채팅 처리
         if (
             not request.headers["X-ChatBox-Access-Key"]
             or not request.headers["X-ChatBox-Secret-Key"]
@@ -80,9 +82,12 @@ class ChatroomView(generics.ListCreateAPIView):
 
         serializer = self.get_serializer(data={"guest": request.data.get("guest")})
         if serializer.is_valid(raise_exception=True):
+            # django channels group name only accepts ASCII alphanumeric, hyphens, underscores, or periods
+            # max length 100
             serializer.save(
                 host_id=host_user.id,
-                name=f"{host_user.service_name}:{request.data.get('guest')}",
+                name=host_user.access_key
+                + ChatroomService.generate_chatroom_uuid(),  # length 44
             )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

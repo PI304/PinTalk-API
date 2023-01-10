@@ -1,3 +1,4 @@
+from urllib.parse import unquote, quote
 from enum import Enum
 
 from channels.db import database_sync_to_async
@@ -30,7 +31,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             query_string = self.scope["query_string"].decode("utf-8")
             if "name=" not in query_string:
                 raise DenyConnection("Query string for 'name' missing")
-            self.user = query_string.split("=")[1]
+
+            self.user = unquote(query_string.split("=")[1])
 
             print(f"Anonymous guest <{self.user}> joined the chat room")
         else:
@@ -45,11 +47,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             # Join room group
-
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
         except Exception as e:
-            print("Websocket Connection Failed")
+            print(e)
+            raise DenyConnection(e)
 
     async def disconnect(self, close_code):
         try:
