@@ -9,6 +9,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
+from apps.chat.models import Chatroom
 from apps.user.models import User
 
 
@@ -33,6 +34,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 raise DenyConnection("Query string for 'name' missing")
 
             self.user = unquote(query_string.split("=")[1])
+            self.host = user
 
             print(f"Anonymous guest <{self.user}> joined the chat room")
         else:
@@ -54,6 +56,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             raise DenyConnection(e)
 
     async def disconnect(self, close_code):
+        await self.save_latest_message()
         try:
             # Leave room group
             await self.channel_layer.group_discard(
@@ -93,3 +96,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         except Http404:
             raise DenyConnection("Request origin not registered")
         return registered_user
+
+    @database_sync_to_async
+    def save_latest_message(self):
+        # TODO: save latest message
+        if self.user_type == UserType.GUEST:
+            try:
+                chatroom = get_object_or_404(
+                    Chatroom, host_id=self.host.id, guest=self.user
+                )
+            except Http404:
+                print("No chatroom with the host id and guest name")
+                self.channel_layer.group_discard(
+                    self.room_group_name, self.channel_name
+                )
+
+            # chatroom.latest_message = fetch data from redis
+            # chatroom.save()
