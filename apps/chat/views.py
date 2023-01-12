@@ -32,11 +32,11 @@ class ChatroomView(generics.ListCreateAPIView):
         # TODO: 마지막 메시지 기준으로 내림차순 정렬
 
         try:
-            user = get_object_or_404(User, id=self.kwargs.get("pk"))
+            user = get_object_or_404(User, access_key=self.kwargs.get("access_key"))
         except Http404:
             raise InstanceNotFound("User with the provided id does not exist")
 
-        queryset = self.queryset.filter(host_id=user.id)
+        queryset = self.queryset.filter(host__access_key=user.access_key)
         return queryset
 
     @swagger_auto_schema(
@@ -59,7 +59,6 @@ class ChatroomView(generics.ListCreateAPIView):
         },
     )
     def post(self, request, *args, **kwargs):
-        # TODO: 중복 채팅 처리
         if (
             not request.headers["X-ChatBox-Access-Key"]
             or not request.headers["X-ChatBox-Secret-Key"]
