@@ -77,6 +77,7 @@ LOGIN_REDIRECT_URL = "/profile"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -120,6 +121,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "version",
+    "X-ChatBox-Access-Key",
+    "X-ChatBox-Secret-Key",
 ]
 
 # CSRF_TRUSTED_ORIGINS = [

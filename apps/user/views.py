@@ -1,12 +1,16 @@
 import datetime
 
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 
 from apps.user.models import User
-from apps.user.serializers import UserSerializer
+from apps.user.serializers import UserSerializer, ClientSerializer
+from config.exceptions import InstanceNotFound
 
 
 class UserListView(generics.ListAPIView):
@@ -45,5 +49,25 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid(raise_exception=True):
             serializer.save(updated_at=datetime.datetime.now())
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ClientView(generics.RetrieveAPIView):
+    serializer_class = ClientSerializer
+    queryset = User.objects.all()
+
+    def get(self, request, *args, **kwargs) -> Response:
+        access_key = request.headers["X-ChatBox-Access-Key"]
+        secret_key = request.headers["X-ChatBox-Secret-Key"]
+
+        try:
+            instance = get_object_or_404(
+                User, access_key=access_key, secret_key=secret_key
+            )
+        except Http404:
+            raise AuthenticationFailed("Invalid access key or secret key")
+
+        serializer = self.get_serializer(instance)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

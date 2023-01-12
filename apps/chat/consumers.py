@@ -1,3 +1,4 @@
+from urllib.parse import unquote, quote
 from enum import Enum
 
 from channels.db import database_sync_to_async
@@ -8,6 +9,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
+from apps.chat.models import Chatroom
 from apps.user.models import User
 
 
@@ -30,7 +32,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             query_string = self.scope["query_string"].decode("utf-8")
             if "name=" not in query_string:
                 raise DenyConnection("Query string for 'name' missing")
-            self.user = query_string.split("=")[1]
+
+            self.user = unquote(query_string.split("=")[1])
+            self.host = user
 
             print(f"Anonymous guest <{self.user}> joined the chat room")
         else:
@@ -45,13 +49,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             # Join room group
-
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
         except Exception as e:
-            print("Websocket Connection Failed")
+            print(e)
+            raise DenyConnection(e)
 
     async def disconnect(self, close_code):
+        await self.save_latest_message()
         try:
             # Leave room group
             await self.channel_layer.group_discard(
@@ -91,3 +96,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         except Http404:
             raise DenyConnection("Request origin not registered")
         return registered_user
+
+    @database_sync_to_async
+    def save_latest_message(self):
+        # TODO: save latest message
+        if self.user_type == UserType.GUEST:
+            try:
+                chatroom = get_object_or_404(
+                    Chatroom, host_id=self.host.id, guest=self.user
+                )
+            except Http404:
+                print("No chatroom with the host id and guest name")
+                self.channel_layer.group_discard(
+                    self.room_group_name, self.channel_name
+                )
+
+            # chatroom.latest_message = fetch data from redis
+            # chatroom.save()
