@@ -59,20 +59,15 @@ class ChatroomView(generics.ListCreateAPIView):
         },
     )
     def post(self, request, *args, **kwargs):
-        if (
-            not request.headers["X-ChatBox-Access-Key"]
-            or not request.headers["X-ChatBox-Secret-Key"]
-        ):
+        if not request.headers["X-ChatBox-Secret-Key"]:
             raise ValidationError(
                 "'X-ChatBox-Access-Key' and 'X-ChatBox-Secret-Key' header must be present"
             )
-        access_key = request.headers["X-ChatBox-Access-Key"]
         secret_key = request.headers["X-ChatBox-Secret-Key"]
         try:
             host_user = get_object_or_404(
                 User,
-                id=kwargs.get("pk"),
-                access_key=access_key,
+                access_key=kwargs.get("access_key"),
                 secret_key=secret_key,
                 service_name=request.data.get("service_name"),
             )
@@ -85,8 +80,7 @@ class ChatroomView(generics.ListCreateAPIView):
             # max length 100
             serializer.save(
                 host_id=host_user.id,
-                name=host_user.access_key
-                + ChatroomService.generate_chatroom_uuid(),  # length 44
+                name=ChatroomService.generate_chatroom_uuid(),  # length 22
             )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

@@ -7,7 +7,7 @@ class Chatroom(TimeStampMixin):
     id = models.BigAutoField(primary_key=True)
     host = models.ForeignKey(User, on_delete=models.CASCADE)
     guest = models.CharField(max_length=20, null=False, blank=False)
-    name = models.CharField(max_length=50, null=False, blank=False)
+    name = models.CharField(max_length=22, null=False, blank=False)
     # latest_msg = models.ForeignKey(
     #     "ChatMessage", on_delete=models.DO_NOTHING, related_name="latest_msg"
     # )
