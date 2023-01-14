@@ -1,6 +1,7 @@
 from urllib.parse import unquote, quote
 from enum import Enum
 
+import redis
 from channels.db import database_sync_to_async
 from channels.exceptions import DenyConnection
 
@@ -10,6 +11,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from apps.chat.models import Chatroom
+from apps.chat.services import ChatroomService
 from apps.user.models import User
 
 
@@ -46,6 +48,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "chat_%s" % self.room_name
+        self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
 
         try:
             # Join room group
@@ -67,17 +70,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive_json(self, content, **kwargs):
-        print("save here")
-        message = content["message"]
+        content["timestamp"] = int(content["timestamp"] / 1000)
+        serialized_json = ChatroomService.save_msg_in_mem(
+            content, self.room_group_name, self.conn
+        )
 
         # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name, {"type": "chat_message", "message": message}
-        )
+        await self.channel_layer.group_send(self.room_group_name, serialized_json)
 
     # Receive message from room group
     async def chat_message(self, event):
-        print("do not save here")
         # Send message to WebSocket
         await self.send_json(event)
 

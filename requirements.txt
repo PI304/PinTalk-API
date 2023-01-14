@@ -57,3 +57,5 @@ zope.interface==5.5.2
 
 djangochannelsrestframework~=1.1.0
 channels~=4.0.0
+shortuuid~=1.0.11
+redis~=4.4.0

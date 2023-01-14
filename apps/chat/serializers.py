@@ -26,3 +26,13 @@ class ChatroomSerializer(serializers.ModelSerializer):
         model = Chatroom
         fields = ["id", "host", "guest", "name", "created_at", "updated_at"]
         read_only_fields = ["id", "host", "name", "created_at", "updated_at"]
+
+
+class ChatMessageInMemorySerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=["chat_message", "notice"])
+    message = serializers.CharField(max_length=1000, min_length=1)
+    is_host = serializers.BooleanField()
+    timestamp = serializers.IntegerField()
+
+    class Meta:
+        fields = ["type", "message", "is_host", "timestamp"]
