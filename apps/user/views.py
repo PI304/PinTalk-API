@@ -37,6 +37,9 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 "serviceDomain": openapi.Schema(
                     type=openapi.TYPE_STRING, description="운영하려는 사이트의 도메인"
                 ),
+                "profileImage": openapi.Schema(
+                    type=openapi.TYPE_FILE, description="프로필 사진"
+                ),
             },
         ),
         responses={
@@ -57,6 +60,27 @@ class ClientView(generics.RetrieveAPIView):
     serializer_class = ClientSerializer
     queryset = User.objects.all()
 
+    access_key_param = openapi.Parameter(
+        "X-ChatBox-Access-Key",
+        openapi.IN_HEADER,
+        description="service access key",
+        type=openapi.TYPE_STRING,
+    )
+    secret_key_param = openapi.Parameter(
+        "X-ChatBox-Secret-Key",
+        openapi.IN_HEADER,
+        description="service secret key",
+        type=openapi.TYPE_STRING,
+    )
+
+    @swagger_auto_schema(
+        operation_summary="Fetch host data (for client side)",
+        manual_parameters=[access_key_param, secret_key_param],
+        responses={
+            200: openapi.Response("user", UserSerializer),
+            400: "Passwords doesn't match",
+        },
+    )
     def get(self, request, *args, **kwargs) -> Response:
         access_key = request.headers["X-ChatBox-Access-Key"]
         secret_key = request.headers["X-ChatBox-Secret-Key"]

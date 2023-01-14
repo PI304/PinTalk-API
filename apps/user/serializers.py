@@ -4,6 +4,7 @@ from apps.user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    # TODO: profile image 반활할 때는 thumbnail 로
     class Meta:
         model = User
         fields = [
