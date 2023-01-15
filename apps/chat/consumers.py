@@ -9,8 +9,10 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from apps.chat.models import Chatroom
+from apps.chat.serializers import ChatMessageSerializer
 from apps.chat.services import ChatroomService
 from apps.user.models import User
 
@@ -54,6 +56,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             # Join room group
             await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
+
+            # latest messages, max 50
+            past_messages = ChatroomService.get_past_messages(
+                self.room_group_name, self.conn
+            )
+
+            for m in past_messages:
+                await self.channel_layer.group_send(self.room_group_name, m)
+
         except Exception as e:
             print(e)
             raise DenyConnection(e)
@@ -70,13 +81,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive_json(self, content, **kwargs):
-        content["timestamp"] = int(content["timestamp"] / 1000)
-        serialized_json = ChatroomService.save_msg_in_mem(
-            content, self.room_group_name, self.conn
-        )
+        if content["type"] == "request":
+            past_messages = ChatroomService.get_past_messages(
+                self.room_group_name, self.conn, int(content["timestamp"] / 1000)
+            )
+            for m in past_messages:
+                await self.channel_layer.group_send(self.room_group_name, m)
+        elif content["type"] == "chat_message":
+            content["timestamp"] = int(content["timestamp"] / 1000)
+            saved_message = ChatroomService.save_msg_in_mem(
+                content, self.room_group_name, self.conn
+            )
 
-        # Send message to room group
-        await self.channel_layer.group_send(self.room_group_name, serialized_json)
+            # Send message to room group
+            await self.channel_layer.group_send(self.room_group_name, saved_message)
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -101,7 +119,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def save_latest_message(self):
-        # TODO: save latest message
         if self.user_type == UserType.GUEST:
             try:
                 chatroom = get_object_or_404(
@@ -112,6 +129,29 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 self.channel_layer.group_discard(
                     self.room_group_name, self.channel_name
                 )
+        elif self.user_type == UserType.USER:
+            try:
+                chatroom = get_object_or_404(Chatroom, host_id=self.user.id)
+            except Http404:
+                print("No chatroom with the host id and guest name")
+                self.channel_layer.group_discard(
+                    self.room_group_name, self.channel_name
+                )
 
-            # chatroom.latest_message = fetch data from redis
-            # chatroom.save()
+        latest_message = ChatroomService.get_latest_message(
+            self.room_group_name, self.conn
+        )
+        print(latest_message)
+
+        data = {
+            "message": latest_message["message"],
+            "is_host": latest_message["is_host"],
+        }
+
+        serializer = ChatMessageSerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(chatroom_id=chatroom.id)
+
+        chatroom.latest_msg_id = serializer.data.get("id")
+        chatroom.updated_at = timezone.now()
+        chatroom.save(update_fields=["latest_msg", "updated_at"])

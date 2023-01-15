@@ -11,8 +11,6 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "chatroom",
-            "message",
-            "is_host",
             "created_at",
             "updated_at",
         ]
