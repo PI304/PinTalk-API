@@ -1,11 +1,16 @@
 from django.urls import path
-from .views import ChatroomView, ChatroomDestroyView
+from .views import ChatroomView, ChatroomDestroyView, ChatroomExportView
 
 urlpatterns = [
     path("<str:access_key>/chatrooms/", ChatroomView.as_view(), name="chatroom"),
     path(
-        "<int:pk>/chatrooms/<str:guest_name>/",
+        "chatrooms/<str:room_name>/",
         ChatroomDestroyView.as_view(),
-        name="leave_chatroom",
+        name="leave-chatroom",
+    ),
+    path(
+        "chatrooms/<str:room_name>/export",
+        ChatroomExportView.as_view(),
+        name="export-chatroom-messages",
     ),
 ]
