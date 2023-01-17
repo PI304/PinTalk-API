@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Union, List
 
+import redis
 import shortuuid
 from rest_framework.request import Request
 
@@ -30,7 +31,6 @@ class ChatroomService(object):
         serializer = ChatMessageInMemorySerializer(data=msg_obj)
         if serializer.is_valid(raise_exception=True):
             data = serializer.data
-            print(data)
             json_msg = json.dumps(data, ensure_ascii=False).encode("utf-8")
             redis_conn.zadd(
                 group_name,
@@ -68,3 +68,12 @@ class ChatroomService(object):
         )
         json_dict = latest_message[0].decode("utf-8")
         return dict(json.loads(json_dict))
+
+    @staticmethod
+    def delete_chatroom_mem(room_name: str, redis_conn=None):
+        if redis_conn is None:
+            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+        else:
+            rd = redis_conn
+
+        rd.delete("chat_" + room_name)

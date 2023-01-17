@@ -102,5 +102,9 @@ class ChatroomDestroyView(generics.DestroyAPIView):
         return chatroom
 
     def perform_destroy(self, instance):
+        ChatroomService.delete_chatroom_mem(instance.name)
         instance.delete()
-        # TODO: redis 에 관련 데이터 지우기
+
+
+class ChatroomExportView(generics.RetrieveAPIView):
+    pass
