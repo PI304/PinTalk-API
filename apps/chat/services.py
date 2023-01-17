@@ -31,7 +31,6 @@ class ChatroomService(object):
         serializer = ChatMessageInMemorySerializer(data=msg_obj)
         if serializer.is_valid(raise_exception=True):
             data = serializer.data
-            print(data)
             json_msg = json.dumps(data, ensure_ascii=False).encode("utf-8")
             redis_conn.zadd(
                 group_name,
