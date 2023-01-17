@@ -20,6 +20,9 @@ media
 *.py[cod]
 *$py.class
 
+### Redis ###
+redis
+
 # C extensions
 *.so
 
