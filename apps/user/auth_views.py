@@ -89,7 +89,6 @@ class BasicSignInView(APIView):
         responses={
             201: openapi.Response("user", UserSerializer),
             401: "Incorrect password",
-            404: "User not found",
         },
     )
     def post(self, request, *args, **kwargs):
@@ -99,7 +98,7 @@ class BasicSignInView(APIView):
         try:
             user = get_object_or_404(User, email=email)
         except Http404:
-            raise NotFound("User does not exist")
+            raise AuthenticationFailed("No user by the provided email")
 
         if not check_password(password, user.password):
             raise AuthenticationFailed("Incorrect password")
@@ -224,7 +223,7 @@ class PasswordResetView(APIView):
 
 class EmailVerification(APIView):
     @swagger_auto_schema(
-        operation_summary="Verify code sent to user email when signing up",
+        operation_summary="Send verification code to user email when signing up",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={"email": openapi.Schema(type=openapi.FORMAT_EMAIL)},
@@ -239,6 +238,7 @@ class EmailVerification(APIView):
 
         # set code in cookie
         res = JsonResponse({"success": True})
+        # TODO: httponly, secure options
         res.set_cookie("email_verification_code", generated_code, max_age=300)
 
         # send email
