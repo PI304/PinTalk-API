@@ -56,7 +56,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ClientView(generics.RetrieveAPIView):
+class ClientProfileView(generics.RetrieveAPIView):
     serializer_class = ClientSerializer
     queryset = User.objects.all()
 
@@ -74,6 +74,7 @@ class ClientView(generics.RetrieveAPIView):
     )
 
     @swagger_auto_schema(
+        tags=["client"],
         operation_summary="Fetch host data (for client side)",
         manual_parameters=[access_key_param, secret_key_param],
         responses={

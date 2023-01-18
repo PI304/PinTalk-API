@@ -6,6 +6,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError, NotAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.chat.models import Chatroom
 from apps.chat.serializers import ChatroomSerializer
@@ -24,23 +25,43 @@ from config.exceptions import InstanceNotFound
         },
     ),
 )
-class ChatroomView(generics.ListCreateAPIView):
+class ChatroomListView(generics.ListAPIView):
     serializer_class = ChatroomSerializer
     queryset = Chatroom.objects.all()
 
     def get_queryset(self):
-        # TODO: 마지막 메시지 기준으로 내림차순 정렬
-
         try:
             user = get_object_or_404(User, access_key=self.kwargs.get("access_key"))
         except Http404:
             raise InstanceNotFound("User with the provided id does not exist")
 
-        queryset = self.queryset.filter(host__access_key=user.access_key)
+        queryset = self.queryset.filter(host__access_key=user.access_key).order_by(
+            "-latest_msg__created_at"
+        )
         return queryset
 
+
+class ChatroomCreateView(generics.CreateAPIView):
+    serializer_class = ChatroomSerializer
+
+    access_key_param = openapi.Parameter(
+        "X-ChatBox-Access-Key",
+        openapi.IN_HEADER,
+        description="service access key",
+        type=openapi.TYPE_STRING,
+    )
+    secret_key_param = openapi.Parameter(
+        "X-ChatBox-Secret-Key",
+        openapi.IN_HEADER,
+        description="service secret key",
+        type=openapi.TYPE_STRING,
+    )
+
     @swagger_auto_schema(
-        operation_summary="Open chatroom",
+        tags=["client"],
+        operation_summary="Open chatroom (client side)",
+        operation_description="Make a new chatroom with guest's name",
+        manual_parameters=[access_key_param, secret_key_param],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             required=["serviceName", "guest"],
@@ -59,15 +80,19 @@ class ChatroomView(generics.ListCreateAPIView):
         },
     )
     def post(self, request, *args, **kwargs):
-        if not request.headers["X-ChatBox-Secret-Key"]:
+        if (
+            not request.headers["X-ChatBox-Access-Key"]
+            and request.headers["X-ChatBox-Secret-Key"]
+        ):
             raise ValidationError(
                 "'X-ChatBox-Access-Key' and 'X-ChatBox-Secret-Key' header must be present"
             )
+        access_key = request.headers["X-ChatBox-Access-Key"]
         secret_key = request.headers["X-ChatBox-Secret-Key"]
         try:
             host_user = get_object_or_404(
                 User,
-                access_key=kwargs.get("access_key"),
+                access_key=access_key,
                 secret_key=secret_key,
                 service_name=request.data.get("service_name"),
             )
@@ -106,5 +131,5 @@ class ChatroomDestroyView(generics.DestroyAPIView):
         instance.delete()
 
 
-class ChatroomExportView(generics.RetrieveAPIView):
+class ChatroomExportView(APIView):
     pass
