@@ -129,6 +129,10 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 #     "http://localhost:3000",
 # ]
 
+# SESSION
+SESSION_COOKIE_AGE = 3600  # in seconds
+SESSION_SAVE_EVERY_REQUEST = True
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -200,8 +204,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-SITE_ID = 1
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
