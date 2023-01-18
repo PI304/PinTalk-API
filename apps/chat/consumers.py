@@ -95,6 +95,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             # Send message to room group
             await self.channel_layer.group_send(self.room_group_name, saved_message)
+            await self.save_message_db(saved_message)
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -118,40 +119,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         return registered_user
 
     @database_sync_to_async
-    def save_latest_message(self):
-        if self.user_type == UserType.GUEST:
-            try:
-                chatroom = get_object_or_404(
-                    Chatroom, host_id=self.host.id, guest=self.user
-                )
-            except Http404:
-                print("No chatroom with the host id and guest name")
-                self.channel_layer.group_discard(
-                    self.room_group_name, self.channel_name
-                )
-        elif self.user_type == UserType.USER:
-            try:
-                chatroom = get_object_or_404(Chatroom, host_id=self.user.id)
-            except Http404:
-                print("No chatroom with the host id and guest name")
-                self.channel_layer.group_discard(
-                    self.room_group_name, self.channel_name
-                )
-
+    def save_latest_message(self) -> None:
+        room_name = self.room_group_name.split("_")[1]
         latest_message = ChatroomService.get_latest_message(
             self.room_group_name, self.conn
         )
-        print(latest_message)
 
-        data = {
-            "message": latest_message["message"],
-            "is_host": latest_message["is_host"],
-        }
+        ChatroomService.save_message(room_name, latest_message)
 
-        serializer = ChatMessageSerializer(data=data)
-        if serializer.is_valid(raise_exception=True):
-            serializer.save(chatroom_id=chatroom.id)
-
-        chatroom.latest_msg_id = serializer.data.get("id")
-        chatroom.updated_at = timezone.now()
-        chatroom.save(update_fields=["latest_msg", "updated_at"])
+    @database_sync_to_async
+    def save_message_db(self, msg_obj: dict) -> None:
+        ChatroomService.save_message(self.room_group_name.split("_")[1], msg_obj)
