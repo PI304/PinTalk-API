@@ -67,7 +67,10 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_deleted", False)
 
         # TODO: more details on access key and secret key
-        extra_fields.setdefault("access_key", base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf8').rstrip('=\n'))
+        extra_fields.setdefault(
+            "access_key",
+            base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf8").rstrip("=\n"),
+        )
         extra_fields.setdefault("secret_key", secrets.token_hex(32))
         extra_fields.setdefault("service_name", "Chat Box")
 
@@ -83,18 +86,29 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     access_key = models.CharField(max_length=22, null=False, blank=False)
     secret_key = models.CharField(max_length=64, null=False, blank=False)
     service_name = models.CharField(max_length=50, null=False, blank=False)
+    service_domain = models.CharField(max_length=200, null=True, blank=False)
     service_expl = models.CharField(max_length=200, null=False, blank=False)
+    profile_name = models.CharField(max_length=50, null=False, blank=True, default="")
+    description = models.CharField(max_length=200, null=False, blank=True, default="")
+    profile_image = models.ImageField(blank=True, null=True)
+
+    is_staff = models.BooleanField(
+        default=False,
+        help_text="Designates whether the user can log into this admin site.",
+    )
 
     objects = UserManager()
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["service_name", "service_expl"]
+    REQUIRED_FIELDS = ["profile_name", "service_name", "service_expl"]
 
     class Meta:
         db_table = "user"
         unique_together = ["email"]
 
+    def __str__(self):
+        return f"[{self.id}] {self.get_username()}"
 
-
-
+    def __repr__(self):
+        return f"User({self.id}, {self.get_username()})"

@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  redis-docker:
+    image: chatbox-redis
+    command: redis-server --port 6379
+    restart: always
+    container_name: chatbox-redis
+    labels:
+      - "name=chatbox-redis"
+    volumes:
+      - /Users/jisoo/Desktop/dev/playidea/ChatBox/ChatBox-API/redis/redis_data:/data
+    ports:
+      - 6379:6379
