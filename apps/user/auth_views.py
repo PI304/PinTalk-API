@@ -1,6 +1,7 @@
 from django.contrib.auth.models import update_last_login
 from django.http import JsonResponse, Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.permissions import AllowAny
@@ -164,16 +165,31 @@ class PasswordChangeView(APIView):
     serializer = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_summary="Change user password",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "currentPassword": openapi.Schema(type=openapi.FORMAT_PASSWORD),
+                "newPassword": openapi.Schema(type=openapi.FORMAT_PASSWORD),
+            },
+        ),
+        responses={
+            200: openapi.Response("Success", UserSerializer),
+            401: "Password do not match",
+        },
+    )
     def post(self, request, *args, **kwargs):
         user = request.user
         current_password = request.data.get("current_password")
         new_password = request.data.get("new_password")
 
         if not check_password(current_password, user.password):
-            raise AuthenticationFailed
+            raise AuthenticationFailed("Password do not match")
 
         user.set_password(new_password)
-        user.save(update_fields=["password"])
+        user.updated_at = timezone.now()
+        user.save(update_fields=["password", "updated_at"])
 
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
