@@ -2,10 +2,12 @@ import datetime
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from djangorestframework_camel_case.parser import CamelCaseJSONParser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
 from apps.user.models import User
@@ -22,9 +24,11 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     allowed_methods = ["PATCH", "GET"]
+    parser_classes = [MultiPartParser, FormParser, CamelCaseJSONParser]
 
     @swagger_auto_schema(
         operation_summary="Update user profile",
+        operaion_description="Use multipart/form-data type for profile images",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={

@@ -13,9 +13,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls.static import static
 from django.http import HttpResponse
-from django.shortcuts import render
 from django.urls import re_path, include, path
+
+from config import settings
 
 
 def health_check_view(request):
@@ -26,3 +28,6 @@ urlpatterns = [
     path("health-check", health_check_view, name="health-check"),
     re_path(r"^api/", include("config.api_urls_v1")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
