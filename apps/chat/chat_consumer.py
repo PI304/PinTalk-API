@@ -28,7 +28,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # Check Origin
         user = await self.get_user_by_origin_header()
         self.origin = user.service_domain
-        print(self.origin)
+
+        # Check Chatroom
+        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+        self.room_group_name = "chat_%s" % self.room_name
+
+        chatroom = await self.get_chatroom_instance()
+
+        if chatroom.is_deleted:
+            # chatroom 이 이미 삭제되어 대화불가 상태일 때
+            raise DenyConnection("This chatroom is deleted")
+
         # Check user
         if isinstance(self.user, AnonymousUser):
             # Guest
@@ -49,9 +59,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             print(f"Registered user <{self.user.email}> joined the chat room")
 
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = "chat_%s" % self.room_name
-        self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
+            self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
 
         try:
             # Join room group
@@ -98,7 +106,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             # Send message to room group
             await self.channel_layer.group_send(self.room_group_name, saved_message)
-            await self.save_message_db(saved_message)
+
+            if content["type"] == "chat_message":
+                await self.save_message_db(saved_message)
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -137,3 +147,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def save_message_db(self, msg_obj: dict) -> None:
         ChatroomService.save_message(self.room_group_name.split("_")[1], msg_obj)
+
+    @database_sync_to_async
+    def get_chatroom_instance(self) -> Chatroom:
+        try:
+            chatroom = get_object_or_404(Chatroom, name=self.room_name)
+        except Http404:
+            raise DenyConnection("Cannot get Chatroom instance by provided room name")
+
+        return chatroom

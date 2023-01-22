@@ -31,12 +31,17 @@ class ChatroomService(object):
         return s
 
     @staticmethod
-    def save_msg_in_mem(msg_obj: dict, group_name: str, redis_conn) -> ChatMessage:
+    def save_msg_in_mem(msg_obj: dict, group_name: str, redis_conn=None) -> ChatMessage:
+        if redis_conn is None:
+            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+        else:
+            rd = redis_conn
+
         serializer = ChatMessageInMemorySerializer(data=msg_obj)
         if serializer.is_valid(raise_exception=True):
             data = serializer.data
             json_msg = json.dumps(data, ensure_ascii=False).encode("utf-8")
-            redis_conn.zadd(
+            rd.zadd(
                 group_name,
                 {
                     json_msg: datetime.fromtimestamp(data["timestamp"]).strftime(

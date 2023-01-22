@@ -1,5 +1,9 @@
+import time
+from datetime import datetime
+
 from django.http import Http404
 from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
@@ -83,7 +87,7 @@ class ChatroomClientCreateView(generics.GenericAPIView):
             },
         ),
         responses={
-            201: openapi.Response("Success", ChatroomSerializer),
+            201: openapi.Response("Success", ChatroomClientSerializer),
             401: "User not registered",
             409: "Chatroom with the provided guest name already exists",
         },
@@ -130,7 +134,7 @@ class ChatroomClientCreateView(generics.GenericAPIView):
         operation_description="Reenter an existing chatroom",
         manual_parameters=[access_key_param, secret_key_param, guest_name_param],
         responses={
-            200: openapi.Response("Success", ChatroomSerializer),
+            200: openapi.Response("Success", ChatroomClientSerializer),
             401: "User not registered",
             404: "No previous chatroom record",
         },
@@ -160,6 +164,46 @@ class ChatroomClientRetrieveView(generics.RetrieveAPIView):
         return queryset.filter(guest=self.kwargs.get("guest")).first()
 
 
+@method_decorator(
+    name="patch",
+    decorator=swagger_auto_schema(
+        tags=["client"],
+        operation_summary="Resume closed chatroom (for client)",
+        operation_description="No body data. Make websocket connection after re-opening this chatroom",
+        responses={
+            200: openapi.Response("Success", ChatroomClientSerializer),
+            404: "Chatroom with provided name does not exist",
+        },
+    ),
+)
+class ChatroomClientResumeView(generics.UpdateAPIView):
+    queryset = Chatroom.objects.all()
+    serializer_class = ChatroomClientSerializer
+    allowed_methods = ["PATCH"]
+
+    def get_object(self):
+        instance = self.queryset.filter(name=self.kwargs.get("room_name")).first()
+        if instance in None:
+            raise InstanceNotFound("Chatroom with provided name does not exist")
+        return instance
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        data = {"is_deleted": False, "deleted_at": None}
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(updated_at=timezone.now())
+
+        message_obj = {
+            "type": "notice",
+            "message": "Resumed",
+            "timestamp": time.mktime(datetime.today().timetuple()),
+        }
+
+        ChatroomService.save_msg_in_mem(message_obj, "chat_" + instance.name)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class ChatroomDestroyView(generics.DestroyAPIView):
     serializer_class = ChatroomSerializer
     queryset = Chatroom.objects.all()
@@ -176,9 +220,20 @@ class ChatroomDestroyView(generics.DestroyAPIView):
 
         return chatroom
 
-    def perform_destroy(self, instance):
+    def delete(self, request, args, kwargs) -> Response:
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data={"is_deleted": True, "deleted_at": timezone.now()},
+            partial=True,
+        )
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(updated_at=timezone.now())
+
+        # 채팅 종료 시, redis 기록을 지움 (종료된 채팅방에 대한 메시지 기록은 db 에서 조회함)
         ChatroomService.delete_chatroom_mem(instance.name)
-        instance.delete()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ChatroomExportView(APIView):
