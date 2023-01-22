@@ -66,12 +66,15 @@ class ChatroomService(object):
         return decoded_messages
 
     @staticmethod
-    def get_latest_message(group_name: str, redis_conn) -> dict:
+    def get_latest_message(group_name: str, redis_conn) -> Union[None, dict]:
         latest_message = redis_conn.zrevrangebyscore(
             group_name, datetime.now().strftime("%Y%m%d%H%M%S"), "-9999999999", 0, 1
         )
-        json_dict = latest_message[0].decode("utf-8")
-        return dict(json.loads(json_dict))
+        if len(latest_message) == 0:
+            return None
+        else:
+            json_dict = latest_message[0].decode("utf-8")
+            return dict(json.loads(json_dict))
 
     @staticmethod
     def delete_chatroom_mem(room_name: str, redis_conn=None) -> None:
@@ -103,3 +106,31 @@ class ChatroomService(object):
         chatroom.save(update_fields=["latest_msg", "updated_at"])
 
         return chatroom
+
+
+class ChatroomStatusService:
+    @staticmethod
+    def save_status_in_mem(msg_obj: dict, group_name: str, redis_conn) -> None:
+        if redis_conn is None:
+            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+        else:
+            rd = redis_conn
+
+        json_msg = json.dumps(msg_obj, ensure_ascii=False).encode("utf-8")
+        rd.zadd(
+            group_name,
+            {
+                json_msg: datetime.fromtimestamp(msg_obj["timestamp"]).strftime(
+                    "%Y%m%d%H%M%S"
+                )
+            },
+        )
+
+    @staticmethod
+    def delete_status_room_mem(group_name: str, redis_conn=None) -> None:
+        if redis_conn is None:
+            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+        else:
+            rd = redis_conn
+
+        rd.delete(group_name)

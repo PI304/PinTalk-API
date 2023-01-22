@@ -28,6 +28,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # Check Origin
         user = await self.get_user_by_origin_header()
         self.origin = user.service_domain
+        print(self.origin)
         # Check user
         if isinstance(self.user, AnonymousUser):
             # Guest
@@ -70,7 +71,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             raise DenyConnection(e)
 
     async def disconnect(self, close_code):
-        await self.save_latest_message()
+        if hasattr(self, "room_group_name"):
+            await self.save_latest_message()
+
         try:
             # Leave room group
             await self.channel_layer.group_discard(
@@ -87,7 +90,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             )
             for m in past_messages:
                 await self.channel_layer.group_send(self.room_group_name, m)
-        elif content["type"] == "chat_message":
+        elif content["type"] == "chat_message" or content["type"] == "notice":
             content["timestamp"] = int(content["timestamp"] / 1000)
             saved_message = ChatroomService.save_msg_in_mem(
                 content, self.room_group_name, self.conn
@@ -99,6 +102,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     # Receive message from room group
     async def chat_message(self, event):
+        # Send message to WebSocket
+        await self.send_json(event)
+
+    async def notice(self, event):
         # Send message to WebSocket
         await self.send_json(event)
 

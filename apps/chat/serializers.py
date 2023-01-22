@@ -51,7 +51,9 @@ class ChatroomClientSerializer(serializers.ModelSerializer):
 
 
 class ChatMessageInMemorySerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=["chat_message", "notice"])
+    type = serializers.ChoiceField(
+        choices=["chat_message", "notice", "request", "status"]
+    )
     message = serializers.CharField(max_length=1000, min_length=1)
     is_host = serializers.BooleanField()
     timestamp = serializers.IntegerField()
