@@ -90,7 +90,9 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     service_expl = models.CharField(max_length=200, null=False, blank=False)
     profile_name = models.CharField(max_length=50, null=False, blank=True, default="")
     description = models.CharField(max_length=200, null=False, blank=True, default="")
-    profile_image = models.ImageField(blank=True, null=True)
+    profile_image = models.ImageField(
+        blank=False, null=True, upload_to="user_profiles/"
+    )
 
     is_staff = models.BooleanField(
         default=False,

@@ -4,7 +4,8 @@ from apps.user.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # TODO: profile image 반활할 때는 thumbnail 로
+    profile_image = serializers.ImageField(required=False, use_url=True)
+
     class Meta:
         model = User
         fields = [
@@ -18,6 +19,7 @@ class UserSerializer(serializers.ModelSerializer):
             "service_expl",
             "service_domain",
             "is_deleted",
+            "profile_image",
             "created_at",
             "updated_at",
         ]
