@@ -11,6 +11,8 @@ class Chatroom(TimeStampMixin):
     latest_msg = models.ForeignKey(
         "ChatMessage", on_delete=models.DO_NOTHING, related_name="latest_msg", null=True
     )
+    is_deleted = models.BooleanField(null=False, default=False)
+    deleted_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "chatroom"
@@ -24,7 +26,7 @@ class Chatroom(TimeStampMixin):
 
 class ChatMessage(TimeStampMixin):
     id = models.BigAutoField(primary_key=True)
-    chatroom = models.ForeignKey(Chatroom, on_delete=models.CASCADE)
+    chatroom = models.ForeignKey(Chatroom, on_delete=models.DO_NOTHING)
     message = models.CharField(max_length=2000, null=False)
     is_host = models.BooleanField(null=False, blank=False)
 
