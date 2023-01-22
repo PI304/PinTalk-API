@@ -46,7 +46,15 @@ class ChatroomClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Chatroom
-        fields = ["host", "guest", "name", "created_at", "updated_at"]
+        fields = [
+            "host",
+            "guest",
+            "name",
+            "is_deleted",
+            "deleted_at",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["host", "guest", "name", "created_at", "updated_at"]
 
 

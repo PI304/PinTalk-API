@@ -5,6 +5,7 @@ from .views import (
     ChatroomExportView,
     ChatroomClientCreateView,
     ChatroomClientRetrieveView,
+    ChatroomClientResumeView,
 )
 
 urlpatterns = [
@@ -13,6 +14,11 @@ urlpatterns = [
         "client/<str:guest>/",
         ChatroomClientRetrieveView.as_view(),
         name="create-chatroom",
+    ),
+    path(
+        "client/<str:room_name>/resume",
+        ChatroomClientResumeView.as_view(),
+        name="resume-chatroom",
     ),
     path(
         "<str:access_key>/chatrooms/", ChatroomListView.as_view(), name="chatroom-list"
