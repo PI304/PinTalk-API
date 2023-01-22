@@ -10,7 +10,7 @@ from .views import (
 urlpatterns = [
     path("client/", ChatroomClientCreateView.as_view(), name="create-chatroom"),
     path(
-        "client/<str:guest>",
+        "client/<str:guest>/",
         ChatroomClientRetrieveView.as_view(),
         name="create-chatroom",
     ),
