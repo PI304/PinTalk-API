@@ -44,11 +44,12 @@ class ClientSerializer(serializers.ModelSerializer):
             "profile_name",
             "description",
             "service_name",
-            # TODO: add profile image
+            "profile_image",
         ]
         read_only_fields = [
             "email",
             "profile_name",
             "description",
             "service_name",
+            "profile_image",
         ]

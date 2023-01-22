@@ -10,10 +10,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.chat.models import Chatroom
-from apps.chat.serializers import ChatroomSerializer
+from apps.chat.serializers import ChatroomSerializer, ChatroomClientSerializer
 from apps.chat.services import ChatroomService
 from apps.user.models import User
-from config.exceptions import InstanceNotFound
+from config.exceptions import InstanceNotFound, DuplicateInstance
 
 access_key_param = openapi.Parameter(
     "X-ChatBox-Access-Key",
@@ -62,7 +62,7 @@ class ChatroomListView(generics.ListAPIView):
 
 
 class ChatroomClientCreateView(generics.GenericAPIView):
-    serializer_class = ChatroomSerializer
+    serializer_class = ChatroomClientSerializer
     queryset = Chatroom.objects.all()
 
     @swagger_auto_schema(
@@ -85,6 +85,7 @@ class ChatroomClientCreateView(generics.GenericAPIView):
         responses={
             201: openapi.Response("Success", ChatroomSerializer),
             401: "User not registered",
+            409: "Chatroom with the provided guest name already exists",
         },
     )
     def post(self, request, *args, **kwargs):
@@ -100,15 +101,25 @@ class ChatroomClientCreateView(generics.GenericAPIView):
         except Http404:
             raise NotAuthenticated("User not registered")
 
-        serializer = self.get_serializer(data={"guest": request.data.get("guest")})
-        if serializer.is_valid(raise_exception=True):
-            # django channels group name only accepts ASCII alphanumeric, hyphens, underscores, or periods
-            # max length 100
-            serializer.save(
-                host_id=host_user.id,
-                name=ChatroomService.generate_chatroom_uuid(),  # length 22
+        guest_name = request.data.get("guest")
+
+        try:
+            existing_chatroom = get_object_or_404(
+                Chatroom, host_id=host_user.id, guest=guest_name
             )
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            raise DuplicateInstance(
+                "Chatroom with the provided guest name already exists"
+            )
+        except Http404:
+            serializer = self.get_serializer(data={"guest": guest_name})
+            if serializer.is_valid(raise_exception=True):
+                # django channels group name only accepts ASCII alphanumeric, hyphens, underscores, or periods
+                # max length 100
+                serializer.save(
+                    host_id=host_user.id,
+                    name=ChatroomService.generate_chatroom_uuid(),  # length 22
+                )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @method_decorator(
@@ -126,7 +137,7 @@ class ChatroomClientCreateView(generics.GenericAPIView):
     ),
 )
 class ChatroomClientRetrieveView(generics.RetrieveAPIView):
-    serializer_class = ChatroomSerializer
+    serializer_class = ChatroomClientSerializer
     queryset = Chatroom.objects.all()
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["guest"]

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.chat.models import Chatroom, ChatMessage
-from apps.user.serializers import UserSerializer
+from apps.user.serializers import UserSerializer, ClientSerializer
 
 
 class ChatMessageSerializer(serializers.ModelSerializer):
@@ -18,12 +18,36 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 class ChatroomSerializer(serializers.ModelSerializer):
     host = UserSerializer(read_only=True)
-    # last_message = ChatMessageSerializer(read_only=True)
+    latest_msg = ChatMessageSerializer(read_only=True)
 
     class Meta:
         model = Chatroom
-        fields = ["id", "host", "guest", "name", "created_at", "updated_at"]
-        read_only_fields = ["id", "host", "name", "created_at", "updated_at"]
+        fields = [
+            "id",
+            "host",
+            "guest",
+            "name",
+            "latest_msg",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "host",
+            "name",
+            "latest_msg",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class ChatroomClientSerializer(serializers.ModelSerializer):
+    host = ClientSerializer(read_only=True)
+
+    class Meta:
+        model = Chatroom
+        fields = ["host", "guest", "name", "created_at", "updated_at"]
+        read_only_fields = ["host", "guest", "name", "created_at", "updated_at"]
 
 
 class ChatMessageInMemorySerializer(serializers.Serializer):
