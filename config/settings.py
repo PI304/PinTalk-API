@@ -85,6 +85,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "config.middlewares.add_headers.AddHeaders",
     "config.middlewares.request_middleware.RequestMiddleware",
+    "config.middlewares.check_headers.CheckHeaders",
 ]
 
 ROOT_URLCONF = "config.urls"
