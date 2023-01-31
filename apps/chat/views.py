@@ -20,13 +20,13 @@ from apps.user.models import User
 from config.exceptions import InstanceNotFound, DuplicateInstance
 
 access_key_param = openapi.Parameter(
-    "X-ChatBox-Access-Key",
+    "X-PinTalk-Access-Key",
     openapi.IN_HEADER,
     description="service access key",
     type=openapi.TYPE_STRING,
 )
 secret_key_param = openapi.Parameter(
-    "X-ChatBox-Secret-Key",
+    "X-PinTalk-Secret-Key",
     openapi.IN_HEADER,
     description="service secret key",
     type=openapi.TYPE_STRING,
@@ -93,8 +93,8 @@ class ChatroomClientCreateView(generics.GenericAPIView):
         },
     )
     def post(self, request, *args, **kwargs):
-        access_key = request.headers["X-ChatBox-Access-Key"]
-        secret_key = request.headers["X-ChatBox-Secret-Key"]
+        access_key = request.headers["X-PinTalk-Access-Key"]
+        secret_key = request.headers["X-PinTalk-Secret-Key"]
         try:
             host_user = get_object_or_404(
                 User,
@@ -147,8 +147,8 @@ class ChatroomClientRetrieveView(generics.RetrieveAPIView):
     filterset_fields = ["guest"]
 
     def get_queryset(self):
-        access_key = self.request.headers["X-ChatBox-Access-Key"]
-        secret_key = self.request.headers["X-ChatBox-Secret-Key"]
+        access_key = self.request.headers["X-PinTalk-Access-Key"]
+        secret_key = self.request.headers["X-PinTalk-Secret-Key"]
         try:
             host_user = get_object_or_404(
                 User,

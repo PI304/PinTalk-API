@@ -222,7 +222,7 @@ class PasswordResetView(APIView):
         user.save(update_fields=["password"])
 
         email = EmailMessage(
-            "[ChatBox] 비밀번호가 초기화 되었습니다.",
+            "[PinTalk] 비밀번호가 초기화 되었습니다.",
             f"비밀번호가 아래의 임시 비밀번호로 변경되었습니다. 아래 비밀번호로 다시 로그인하신 뒤 꼭 비밀번호를 변경해주세요.\n임시 비밀번호: {new_password}",
             to=[email],  # 받는 이메일
         )
@@ -259,7 +259,7 @@ class EmailVerification(APIView):
 
         # send email
         email = EmailMessage(
-            "[ChatBox] 이메일 인증 코드입니다.",
+            "[PinTalk] 이메일 인증 코드입니다.",
             generated_code,
             to=[email],  # 받는 이메일
         )

@@ -15,9 +15,9 @@ class CheckHeaders:
     def process_request(self, request):
         if "client" in request.path:
             if not (
-                request.headers["X-ChatBox-Access-Key"]
-                and request.headers["X-ChatBox-Secret-Key"]
+                request.headers["X-PinTalk-Access-Key"]
+                and request.headers["X-PinTalk-Secret-Key"]
             ):
                 raise ValidationError(
-                    "'X-ChatBox-Access-Key' and 'X-ChatBox-Secret-Key' header must be present"
+                    "'X-PinTalk-Access-Key' and 'X-PinTalk-Secret-Key' header must be present"
                 )

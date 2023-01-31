@@ -25,9 +25,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 api_info = openapi.Info(
-    title="ChatBox - API Doc",
+    title="PinTalk - API Doc",
     default_version="v1",
-    description="ChatBox Application을 위한 API 문서\nAcceptHeader Versioning 을 사용합니다.",
+    description="PinTalk Application을 위한 API 문서\nAcceptHeader Versioning 을 사용합니다.",
     terms_of_service="https://www.google.com/policies/terms/",
     contact=openapi.Contact(email="earthlyz9.dev@gmail.com"),
 )

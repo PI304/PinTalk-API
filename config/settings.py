@@ -40,7 +40,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-CHATBOX_APPS = [
+PINTALK_APPS = [
     "apps.user",
     "apps.chat",
 ]
@@ -65,7 +65,7 @@ DJANGO_CORE_APPS = [
     "django.contrib.staticfiles",
 ]
 
-INSTALLED_APPS = DJANGO_CORE_APPS + THIRD_PARTY_APPS + CHATBOX_APPS
+INSTALLED_APPS = DJANGO_CORE_APPS + THIRD_PARTY_APPS + PINTALK_APPS
 
 AUTH_USER_MODEL = "user.User"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
@@ -123,8 +123,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "version",
-    "X-ChatBox-Access-Key",
-    "X-ChatBox-Secret-Key",
+    "X-PinTalk-Access-Key",
+    "X-PinTalk-Secret-Key",
 ]
 
 # CSRF_TRUSTED_ORIGINS = [

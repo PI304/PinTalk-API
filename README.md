@@ -1,1 +1,1 @@
-## ChatBox API
+## PinTalk API

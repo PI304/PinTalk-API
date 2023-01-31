@@ -1,13 +1,13 @@
 version: "3.8"
 services:
   redis-docker:
-    image: chatbox-redis
+    image: pintalk-redis
     command: redis-server --port 6379
     restart: always
-    container_name: chatbox-redis
+    container_name: pintalk-redis
     labels:
-      - "name=chatbox-redis"
+      - "name=pintalk-redis"
     volumes:
-      - /Users/jisoo/Desktop/dev/playidea/ChatBox/ChatBox-API/redis/redis_data:/data
+      - /Users/jisoo/Desktop/dev/playidea/PinkTalk/PinTalk-API/redis/redis_data:/data
     ports:
       - 6379:6379
