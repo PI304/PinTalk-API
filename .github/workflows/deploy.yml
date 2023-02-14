@@ -19,5 +19,6 @@ jobs:
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_KEY }}
           script: |
+            cd /home/PinTalk-API
             git pull origin dev
             docker-compose up --build -d
