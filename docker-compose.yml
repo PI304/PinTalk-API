@@ -36,3 +36,6 @@ services:
     ports:
       - "80:80"
     restart: always
+volumes:
+  pintalk-redis-vol:
+  pintalk-mysql-vol:
