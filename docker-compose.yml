@@ -5,10 +5,8 @@ services:
     command: redis-server --port 6379
     restart: always
     container_name: pintalk-redis
-    labels:
-      - "name=pintalk-redis"
     volumes:
-      - /Users/jisoo/Desktop/dev/playidea/PinkTalk/PinTalk-API/redis/redis_data:/data
+      - pintalk-redis-vol:/data
     ports:
       - 6379:6379
   db:
@@ -19,7 +17,7 @@ services:
     command: --init-file /db/init.sql
     volumes:
       - ./init.sql:/db/init.sql
-      - ./dbdata:/var/lib/mysql
+      - pintalk-mysql-vol:/var/lib/mysql
     environment:
       MYSQL_ROOT_USER: ${DB_USER}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
