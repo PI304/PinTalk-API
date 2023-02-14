@@ -171,10 +171,10 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
         "HOST": "pintalk-db",
-        "PORT": os.environ.get("DB_PORT"),
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "PORT": 3306,
+        "NAME": "pintalk",
+        "USER": "root",
+        "PASSWORD": "linda2927",
         "CONN_MAX_AGE": 60 * 10,  # 10 minutes
         "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
     },
