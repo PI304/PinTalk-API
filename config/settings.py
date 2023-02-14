@@ -170,11 +170,11 @@ CHANNEL_LAYERS = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "HOST": "pintalk-db",
+        "HOST": "0.0.0.0",
         "PORT": 3306,
         "NAME": "pintalk",
         "USER": "root",
-        "PASSWORD": "linda2927",
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
         "CONN_MAX_AGE": 60 * 10,  # 10 minutes
         "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
     },
