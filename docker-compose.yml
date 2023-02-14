@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   redis-docker:
-    image: pintalk-redis
+    build: ./redis
     command: redis-server --port 6379
     restart: always
     container_name: pintalk-redis
@@ -11,3 +11,23 @@ services:
       - /Users/jisoo/Desktop/dev/playidea/PinkTalk/PinTalk-API/redis/redis_data:/data
     ports:
       - 6379:6379
+  db:
+    image: mysql:latest
+    container_name: pintalk-db
+    ports:
+      - "3306:3306"
+    command: --init-file /db/init.sql
+    volumes:
+      - ./init.sql:/db/init.sql
+      - ./dbdata:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_USER: ${DB_USER}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+  api:
+    build: .
+    container_name: pintalk-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db

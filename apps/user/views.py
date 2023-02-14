@@ -2,6 +2,7 @@ import datetime
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from djangorestframework_camel_case.parser import CamelCaseJSONParser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -12,14 +13,33 @@ from rest_framework.response import Response
 
 from apps.user.models import User
 from apps.user.serializers import UserSerializer, ClientSerializer
-from config.exceptions import InstanceNotFound
 
 
+@method_decorator(
+    name="get",
+    decorator=swagger_auto_schema(
+        operation_summary="Get user list (for test only)",
+        responses={
+            200: openapi.Response("Success", UserSerializer),
+            404: "Not found",
+        },
+    ),
+)
 class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
 
+@method_decorator(
+    name="get",
+    decorator=swagger_auto_schema(
+        operation_summary="Get user by id",
+        responses={
+            200: openapi.Response("Success", UserSerializer),
+            404: "Not found",
+        },
+    ),
+)
 class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
@@ -28,7 +48,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 
     @swagger_auto_schema(
         operation_summary="Update user profile",
-        operaion_description="Use multipart/form-data type for profile images",
+        operation_description="Use multipart/form-data type for profile images",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={

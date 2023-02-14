@@ -21,7 +21,13 @@ media
 *$py.class
 
 ### Redis ###
-redis
+redis/redis_data
+
+### macos ###
+.DS_Store
+
+### MySQL Docker ###
+/dbdata
 
 # C extensions
 *.so

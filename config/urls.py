@@ -28,6 +28,3 @@ urlpatterns = [
     path("health-check", health_check_view, name="health-check"),
     re_path(r"^api/", include("config.api_urls_v1")),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
