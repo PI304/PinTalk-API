@@ -14,13 +14,13 @@ services:
     container_name: pintalk-db
     ports:
       - "3306:3306"
-    command:
-      - --default-authentication-plugin=mysql_native_password
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+#    command:
+#      - --default-authentication-plugin=mysql_native_password
+#      - --character-set-server=utf8mb4
+#      - --collation-server=utf8mb4_unicode_ci
     volumes:
-      - ./mysql/conf.d:/etc/mysql/conf.d
-      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
+#      - ./mysql/conf.d:/etc/mysql/conf.d
+#      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
       - pintalk-mysql-vol:/var/lib/mysql
     environment:
       MYSQL_PASSWORD: ${DB_PASSWORD}
