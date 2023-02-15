@@ -1,12 +1,12 @@
 version: "3.8"
 services:
-  redis-docker:
+  redis:
     build: ./redis
     command: redis-server --port 6379
     restart: always
     container_name: pintalk-redis
     volumes:
-      - pintalk-redis-vol:/data
+      - /home/ubuntu/pintalk-data/redis:/data
     ports:
       - 6379:6379
   db:
@@ -14,14 +14,11 @@ services:
     container_name: pintalk-db
     ports:
       - "3306:3306"
-#    command:
-#      - --default-authentication-plugin=mysql_native_password
-#      - --character-set-server=utf8mb4
-#      - --collation-server=utf8mb4_unicode_ci
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     volumes:
-#      - ./mysql/conf.d:/etc/mysql/conf.d
-#      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
-      - pintalk-mysql-vol:/var/lib/mysql
+      - /home/ubuntu/pintalk-data/mysql:/var/lib/mysql
     environment:
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -42,6 +39,3 @@ services:
     ports:
       - "80:80"
     restart: always
-volumes:
-  pintalk-redis-vol:
-  pintalk-mysql-vol:
