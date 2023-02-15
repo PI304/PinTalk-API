@@ -170,7 +170,7 @@ CHANNEL_LAYERS = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "HOST": "0.0.0.0",
+        "HOST": "pintalk-db",
         "PORT": 3306,
         "NAME": "pintalk",
         "USER": "root",
