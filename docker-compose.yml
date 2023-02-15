@@ -20,10 +20,8 @@ services:
     volumes:
       - /home/ubuntu/pintalk-data/mysql:/var/lib/mysql
     environment:
-      MYSQL_USER: root
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: pintalk
-      TZ: Asia/Seoul
+
   api:
     build: .
     container_name: pintalk-api
