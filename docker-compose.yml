@@ -30,6 +30,15 @@ services:
     depends_on:
       - db
     restart: always
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - AWS_S3_USER_ACCESS_KEY_ID=${AWS_S3_USER_ACCESS_KEY_ID}
+      - AWS_S3_USER_SECRET_ACCESS_KEY=${AWS_S3_USER_SECRET_ACCESS_KEY}
+      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+      - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
 
   server:
     build: ./nginx
