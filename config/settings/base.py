@@ -36,7 +36,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["43.201.60.12", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["13.124.31.67", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -152,8 +152,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
-ASGI_APPLICATION = "config.asgi.application"
+WSGI_APPLICATION = "config.wsgi.debug.application"
+ASGI_APPLICATION = "config.asgi.debug.application"
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -173,7 +173,7 @@ DATABASES = {
         "PORT": 3306,
         "NAME": "pintalk",
         "USER": "root",
-        "HOST": "pintalk-db",
+        "HOST": "0.0.0.0",
         "PASSWORD": os.environ.get("DB_PASSWORD"),
         "CONN_MAX_AGE": 60 * 10,  # 10 minutes
         "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",

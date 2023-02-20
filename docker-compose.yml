@@ -6,7 +6,7 @@ services:
     restart: always
     container_name: pintalk-redis
     volumes:
-      - /home/ubuntu/pintalk-data/redis:/data
+      - pintalk-redis:/data
     ports:
       - 6379:6379
   db:
@@ -19,7 +19,7 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     volumes:
-      - /home/ubuntu/pintalk-data/mysql:/var/lib/mysql
+      - pintalk-mysql:/var/lib/mysql
       - ./mysql/initdb.d:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -32,15 +32,10 @@ services:
     depends_on:
       - db
     restart: always
+    env_file:
+      - .env
     environment:
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - AWS_S3_USER_ACCESS_KEY_ID=${AWS_S3_USER_ACCESS_KEY_ID}
-      - AWS_S3_USER_SECRET_ACCESS_KEY=${AWS_S3_USER_SECRET_ACCESS_KEY}
-      - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
-      - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME}
+      DJANGO_SETTINGS_MODULE: config.settings.deploy
 
   server:
     build: ./nginx
@@ -48,3 +43,6 @@ services:
     ports:
       - "80:80"
     restart: always
+volumes:
+  pintalk-redis:
+  pintalk-mysql:
