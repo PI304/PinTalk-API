@@ -6,8 +6,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
 ]  # 인스턴스 IPv4 기반 퍼블릭 DNS 주소 or 퍼블릭 IP
-WSGI_APPLICATION = "config.wsgi.application.deploy"
-ASGI_APPLICATION = "config.asgi.application.deploy"
+WSGI_APPLICATION = "config.wsgi.deploy.application"
+ASGI_APPLICATION = "config.asgi.deploy.application"
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
