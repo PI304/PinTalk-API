@@ -2,7 +2,7 @@ from .base import *
 
 # DEBUG = False
 ALLOWED_HOSTS = [
-    "13.124.31.67",
+    "3.36.53.31",
     "localhost",
     "127.0.0.1",
 ]  # 인스턴스 IPv4 기반 퍼블릭 DNS 주소 or 퍼블릭 IP
