@@ -4,17 +4,17 @@ from .views import (
     ChatroomDestroyView,
     ChatroomExportView,
     ChatroomClientCreateView,
-    ChatroomClientRetrieveView,
+    # ChatroomClientRetrieveView,
     ChatroomClientResumeView,
 )
 
 urlpatterns = [
     path("client/", ChatroomClientCreateView.as_view(), name="create-chatroom"),
-    path(
-        "client/<str:guest>/",
-        ChatroomClientRetrieveView.as_view(),
-        name="create-chatroom",
-    ),
+    # path(
+    #     "client/<str:guest>/",
+    #     ChatroomClientRetrieveView.as_view(),
+    #     name="create-chatroom",
+    # ),
     path(
         "client/<str:room_name>/resume",
         ChatroomClientResumeView.as_view(),

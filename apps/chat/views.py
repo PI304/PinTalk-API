@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.utils import swagger_auto_schema, no_body
 from rest_framework import generics, status, mixins
 from rest_framework.exceptions import ValidationError, NotAuthenticated
 from rest_framework.response import Response
@@ -18,6 +18,7 @@ from apps.chat.serializers import ChatroomSerializer, ChatroomClientSerializer
 from apps.chat.services import ChatroomService
 from apps.user.models import User
 from config.exceptions import InstanceNotFound, DuplicateInstance
+from utils.random_nickname import generate_random_nickname
 
 access_key_param = openapi.Parameter(
     "X-PinTalk-Access-Key",
@@ -71,21 +72,10 @@ class ChatroomClientCreateView(generics.GenericAPIView):
 
     @swagger_auto_schema(
         tags=["client"],
-        operation_summary="Open chatroom (client side)",
-        operation_description="Make a new chatroom with guest's name (채팅방 새로 생성)",
+        operation_summary="Create chatroom (client side)",
+        operation_description="Make a new chatroom with a random guest nickname and saves the chatroom uuid in cookie",
         manual_parameters=[access_key_param, secret_key_param],
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=["serviceName", "guest"],
-            properties={
-                "serviceName": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="등록한 서비스의 정확한 이름"
-                ),
-                "guest": openapi.Schema(
-                    type=openapi.TYPE_STRING, description="게스트가 입력한 채팅명"
-                ),
-            },
-        ),
+        request_body=no_body,
         responses={
             201: openapi.Response("Success", ChatroomClientSerializer),
             401: "User not registered",
@@ -100,68 +90,59 @@ class ChatroomClientCreateView(generics.GenericAPIView):
                 User,
                 access_key=access_key,
                 secret_key=secret_key,
-                service_name=request.data.get("service_name"),
             )
         except Http404:
             raise NotAuthenticated("User not registered")
 
-        guest_name = request.data.get("guest")
+        guest_name = generate_random_nickname()
 
-        try:
-            existing_chatroom = get_object_or_404(
-                Chatroom, host_id=host_user.id, guest=guest_name
+        serializer = self.get_serializer(data={"guest": guest_name})
+        if serializer.is_valid(raise_exception=True):
+            # django channels group name only accepts ASCII alphanumeric, hyphens, underscores, or periods
+            # max length 100
+            serializer.save(
+                host_id=host_user.id,
+                name=ChatroomService.generate_chatroom_uuid(),  # length 22
             )
-            raise DuplicateInstance(
-                "Chatroom with the provided guest name already exists"
-            )
-        except Http404:
-            serializer = self.get_serializer(data={"guest": guest_name})
-            if serializer.is_valid(raise_exception=True):
-                # django channels group name only accepts ASCII alphanumeric, hyphens, underscores, or periods
-                # max length 100
-                serializer.save(
-                    host_id=host_user.id,
-                    name=ChatroomService.generate_chatroom_uuid(),  # length 22
-                )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@method_decorator(
-    name="get",
-    decorator=swagger_auto_schema(
-        tags=["client"],
-        operation_summary="Reenter (get) chatroom (client side)",
-        operation_description="Reenter an existing chatroom",
-        manual_parameters=[access_key_param, secret_key_param, guest_name_param],
-        responses={
-            200: openapi.Response("Success", ChatroomClientSerializer),
-            401: "User not registered",
-            404: "No previous chatroom record",
-        },
-    ),
-)
-class ChatroomClientRetrieveView(generics.RetrieveAPIView):
-    serializer_class = ChatroomClientSerializer
-    queryset = Chatroom.objects.all()
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["guest"]
-
-    def get_queryset(self):
-        access_key = self.request.headers["X-PinTalk-Access-Key"]
-        secret_key = self.request.headers["X-PinTalk-Secret-Key"]
-        try:
-            host_user = get_object_or_404(
-                User,
-                access_key=access_key,
-                secret_key=secret_key,
-            )
-        except Http404:
-            raise NotAuthenticated("User not registered")
-        return self.queryset.filter(host_id=host_user.id)
-
-    def get_object(self):
-        queryset = self.get_queryset()
-        return queryset.filter(guest=self.kwargs.get("guest")).first()
+# @method_decorator(
+#     name="get",
+#     decorator=swagger_auto_schema(
+#         tags=["client"],
+#         operation_summary="Reenter (get) chatroom (client side)",
+#         operation_description="Reenter an existing chatroom",
+#         manual_parameters=[access_key_param, secret_key_param, guest_name_param],
+#         responses={
+#             200: openapi.Response("Success", ChatroomClientSerializer),
+#             401: "User not registered",
+#             404: "No previous chatroom record",
+#         },
+#     ),
+# )
+# class ChatroomClientRetrieveView(generics.RetrieveAPIView):
+#     serializer_class = ChatroomClientSerializer
+#     queryset = Chatroom.objects.all()
+#     filter_backends = [DjangoFilterBackend]
+#     filterset_fields = ["guest"]
+#
+#     def get_queryset(self):
+#         access_key = self.request.headers["X-PinTalk-Access-Key"]
+#         secret_key = self.request.headers["X-PinTalk-Secret-Key"]
+#         try:
+#             host_user = get_object_or_404(
+#                 User,
+#                 access_key=access_key,
+#                 secret_key=secret_key,
+#             )
+#         except Http404:
+#             raise NotAuthenticated("User not registered")
+#         return self.queryset.filter(host_id=host_user.id)
+#
+#     def get_object(self):
+#         queryset = self.get_queryset()
+#         return queryset.filter(guest=self.kwargs.get("guest")).first()
 
 
 @method_decorator(
