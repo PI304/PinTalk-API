@@ -36,7 +36,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["3.36.53.31", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["3.34.7.189", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -158,7 +158,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [(os.environ.get("REDIS_HOST"), 6379)],
         },
     },
 }
@@ -170,10 +170,10 @@ CHANNEL_LAYERS = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "PORT": 3306,
-        "NAME": "pintalk",
-        "USER": "root",
-        "HOST": "0.0.0.0",
+        "PORT": os.environ.get("DB_PORT"),
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "HOST": os.environ.get("DB_HOST"),
         "PASSWORD": os.environ.get("DB_PASSWORD"),
         "CONN_MAX_AGE": 60 * 10,  # 10 minutes
         "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
