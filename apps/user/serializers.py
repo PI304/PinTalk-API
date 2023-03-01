@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
@@ -37,6 +39,10 @@ class UserSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_profile_image(self, value):
+        print(value)
+        return "user_profiles/" + str(uuid.uuid4())
 
     def create(self, validated_data):
         validated_data["password"] = make_password(validated_data.get("password"))
