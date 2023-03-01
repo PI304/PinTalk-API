@@ -6,6 +6,7 @@ import secrets
 import random
 
 from rest_framework.request import Request
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.user.models import User
 
@@ -36,3 +37,10 @@ class UserService(object):
                 random.choice(string.ascii_letters + string.digits)
                 for _ in range(length_of_string)
             )
+
+    @staticmethod
+    def generate_tokens(user: User):
+        refresh = RefreshToken.for_user(user)
+        print(refresh)
+
+        return str(refresh.access_token), str(refresh)

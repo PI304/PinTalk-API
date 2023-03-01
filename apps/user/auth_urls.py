@@ -1,7 +1,4 @@
 from django.urls import path
-
-# from rest_framework_simplejwt.views import TokenVerifyView
-
 from . import auth_views
 
 urlpatterns = [
@@ -9,10 +6,9 @@ urlpatterns = [
     path("login/", auth_views.BasicSignInView.as_view(), name="basic-login"),
     path("leave/", auth_views.SecessionView.as_view(), name="basic-leave"),
 ]
-# urlpatterns += [
-#     path("token/verify/", TokenVerifyView.as_view(), name="token-verify"),
-#     path("token/refresh/", auth_views.TokenRefreshView.as_view(), name="token-refresh"),
-# ]
+urlpatterns += [
+    path("token/refresh/", auth_views.TokenRefreshView.as_view(), name="token-refresh"),
+]
 
 urlpatterns += [
     path(

@@ -7,32 +7,35 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
-from config.exceptions import DuplicateInstance
+from config.exceptions import (
+    DuplicateInstance,
+    ConflictException,
+    UnprocessableException,
+)
+from config.renderer import CustomRenderer
 from .models import User
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.contrib.auth.hashers import check_password
 from django.core.mail import EmailMessage
+from django.conf import settings
 
+from .refresh_token_authenticator import RefreshTokenAuthentication
 from .serializers import UserSerializer
 from .services import UserService
 
 
 class BasicSignUpView(APIView):
-    serializer_class = UserSerializer
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Sign up",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=[
-                "email",
-                "service_name",
-                "service_expl",
-                "password",
-                "confirm_password",
-            ],
             properties={
                 "email": openapi.Schema(
                     type=openapi.FORMAT_EMAIL, description="가입하려는 이메일"
@@ -44,46 +47,37 @@ class BasicSignUpView(APIView):
                     type=openapi.TYPE_STRING,
                     description="서비스 설명",
                 ),
+                "service_domain": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="핀톡 서비스를 이용하려는 도메인",
+                ),
                 "password": openapi.Schema(type=openapi.FORMAT_PASSWORD),
-                "confirm_password": openapi.Schema(type=openapi.FORMAT_PASSWORD),
             },
         ),
         responses={
             201: openapi.Response("user", UserSerializer),
-            400: "Passwords doesn't match",
         },
     )
     def post(self, request, *args, **kwargs):
+        # Check if email confirmation is completed
+        is_confirmed = request.COOKIES.get("email_confirmation")
+        if not is_confirmed:
+            raise UnprocessableException("validate and confirm email first")
 
-        password = request.data.get("password")
-        confirm_password = request.data.get("confirm_password")
-
-        if password != confirm_password:
-            raise ValidationError("Passwords doesn't match")
-
-        email = request.data.get("email")
-        service_name = request.data.get("service_name")
-        service_expl = request.data.get("service_expl")
-
-        access_key = UserService.generate_access_key()
-        secret_key = UserService.generate_secret_key()
-
-        user = User.objects.create_user(
-            email=email,
-            password=password,
-            service_name=service_name,
-            service_expl=service_expl,
-            access_key=access_key,
-            secret_key=secret_key,
-        )
-
-        serializer = UserSerializer(user)
+        data = request.data
+        data["profile_name"] = data.get("service_name", None)
+        serializer = UserSerializer(data=data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(
+                access_key=UserService.generate_access_key(),
+                secret_key=UserService.generate_secret_key(),
+            )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class BasicSignInView(APIView):
-    serializer = UserSerializer
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Sign In",
@@ -106,17 +100,26 @@ class BasicSignInView(APIView):
 
         update_last_login(None, user)
         serializer = UserSerializer(user)
+        access_token, refresh_token = UserService.generate_tokens(user)
 
-        return Response(
-            serializer.data,
+        data = serializer.data
+        data["access_token"] = access_token
+        data["refresh_token"] = refresh_token
+
+        res = Response(
+            data,
             status=status.HTTP_200_OK,
         )
+        res.set_cookie(
+            settings.SIMPLE_JWT["AUTH_COOKIE"],
+            refresh_token,
+            max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
+            secure=True,
+        )  # 7 days
+        return res
 
 
 class SecessionView(APIView):
-    serializer = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
     @swagger_auto_schema(
         operation_summary="Leave",
         responses={200: openapi.Response("user", UserSerializer)},
@@ -130,8 +133,11 @@ class SecessionView(APIView):
 
 
 class CheckDuplicateUsernameView(APIView):
+    authentication_classes = [permissions.AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Check if there's duplicate email (username)",
+        operation_description="참고: 중복확인 성공 이후 한 시간 동안 유효함. 1시간 이후에는 다시 시도해야함",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={"email": openapi.Schema(type=openapi.FORMAT_EMAIL)},
@@ -158,13 +164,13 @@ class CheckDuplicateUsernameView(APIView):
         if existing_email:
             raise DuplicateInstance("Provided email already exists")
 
-        return Response({"email": email}, status=status.HTTP_200_OK)
+        res = Response({"email": email}, status=status.HTTP_200_OK)
+        res.set_cookie("email_duplication_check", "complete", max_age=3600)
+
+        return res
 
 
 class PasswordChangeView(APIView):
-    serializer = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
     @swagger_auto_schema(
         operation_summary="Change user password",
         request_body=openapi.Schema(
@@ -183,6 +189,11 @@ class PasswordChangeView(APIView):
         user = request.user
         current_password = request.data.get("current_password")
         new_password = request.data.get("new_password")
+
+        if current_password == new_password:
+            raise ValidationError(
+                "new password should be different from the old password"
+            )
 
         if not check_password(current_password, user.password):
             raise AuthenticationFailed("Password do not match")
@@ -232,7 +243,7 @@ class PasswordResetView(APIView):
             return Response(status=status.HTTP_200_OK)
         elif success == 0:
             return Response(
-                {"details": "Failed to send email. Try again later."},
+                {"detail": "Failed to send email. Try again later."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -249,12 +260,16 @@ class EmailVerification(APIView):
         },
     )
     def post(self, request, *args, **kwargs):
+        # check email duplication check status
+        is_confirmed = request.COOKIES.get("email_duplication_check")
+        if not is_confirmed:
+            raise UnprocessableException("proceed email duplication check first")
+
         email = request.data.get("email")
         generated_code = UserService.generate_random_code(5, 8)
 
         # set code in cookie
-        res = JsonResponse({"success": True})
-        # TODO: httponly, secure options
+        res = Response({"detail": "email sent"}, status=status.HTTP_200_OK)
         res.set_cookie("email_verification_code", generated_code, max_age=300)
 
         # send email
@@ -266,11 +281,11 @@ class EmailVerification(APIView):
         success = email.send()
 
         if success > 0:
-            return Response(status=status.HTTP_200_OK)
+            return res
         elif success == 0:
             return Response(
                 {
-                    "details": "Failed to send email. Try again later or try with a valid email."
+                    "detail": "Failed to send email. Try again later or try with a valid email."
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
@@ -292,15 +307,74 @@ class EmailConfirmation(APIView):
         if "email_verification_code" in request.COOKIES:
             code_cookie = request.COOKIES.get("email_verification_code")
         else:
-            return Response(
-                {"detail": "No cookies attached"}, status=status.HTTP_400_BAD_REQUEST
-            )
+            raise UnprocessableException("proceed email verification first")
 
         code_input = request.data.get("verification_code")
         if code_cookie == code_input:
-            return Response(status=status.HTTP_200_OK)
+            res = Response(status=status.HTTP_200_OK)
+            if "email_confirmation_code" in request.COOKIES:
+                res.delete_cookie("email_verification_code")
+            res.set_cookie("email_confirmation", "complete", max_age=3600)
+            return res
         else:
-            return Response(
-                {"detail": "Verification code does not match"},
-                status=status.HTTP_409_CONFLICT,
+            raise ConflictException("Verification code does not match")
+
+
+class TokenRefreshView(APIView):
+    """
+    Refresh tokens and returns a new pair.
+    """
+
+    authentication_classes = [RefreshTokenAuthentication]
+    permission_classes = [AllowAny]
+    renderer_classes = [CustomRenderer]
+
+    @swagger_auto_schema(
+        operation_summary="Refresh token",
+        manual_parameters=[
+            openapi.Parameter(
+                "Authentication",
+                openapi.IN_HEADER,
+                description="bearer token",
+                type=openapi.TYPE_STRING,
             )
+        ],
+        responses={
+            201: openapi.Response("Pair of new tokens", TokenRefreshSerializer),
+            401: "Authentication Failed",
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT["AUTH_COOKIE"]) or None
+        access_token = request.META.get("HTTP_AUTHORIZATION") or None
+
+        # authenticate() verifies and decode the token
+        # if token is invalid, it raises an exception and returns 401
+        refresh_token_authenticator = RefreshTokenAuthentication()
+        access_token_authenticator = JWTAuthentication()
+
+        try:
+            access_token_validation = access_token_authenticator.authenticate(request)
+            return Response(
+                "Access token not expired", status=status.HTTP_204_NO_CONTENT
+            )
+        except InvalidToken:
+            # access_token is invalid
+            try:
+                user, validated_token = refresh_token_authenticator.authenticate(
+                    request
+                )
+                new_access, new_refresh = UserService.generate_tokens(user)
+                res = Response(
+                    dict(access_token=new_access, refresh_token=new_refresh),
+                    status=status.HTTP_201_CREATED,
+                )
+                res.set_cookie(
+                    settings.SIMPLE_JWT["AUTH_COOKIE"],
+                    new_refresh,
+                    max_age=60 * 60 * 24 * 14,
+                )  # 2 weeks
+                return res
+
+            except InvalidToken:
+                raise AuthenticationFailed("Both tokens are invalid. Login again.")
