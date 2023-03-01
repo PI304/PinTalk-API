@@ -13,6 +13,7 @@ from rest_framework.response import Response
 
 from apps.user.models import User
 from apps.user.serializers import UserSerializer, ClientSerializer
+from config.permissions import AuthenticatedClientOnly
 
 
 @method_decorator(
@@ -80,43 +81,45 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ClientProfileView(generics.RetrieveAPIView):
-    serializer_class = ClientSerializer
-    queryset = User.objects.all()
-
-    access_key_param = openapi.Parameter(
-        "X-PinTalk-Access-Key",
-        openapi.IN_HEADER,
-        description="service access key",
-        type=openapi.TYPE_STRING,
-    )
-    secret_key_param = openapi.Parameter(
-        "X-PinTalk-Secret-Key",
-        openapi.IN_HEADER,
-        description="service secret key",
-        type=openapi.TYPE_STRING,
-    )
-
-    @swagger_auto_schema(
+@method_decorator(
+    name="get",
+    decorator=swagger_auto_schema(
         tags=["client"],
         operation_summary="Fetch host data (for client side)",
-        manual_parameters=[access_key_param, secret_key_param],
+        manual_parameters=[
+            openapi.Parameter(
+                "X-PinTalk-Access-Key",
+                openapi.IN_HEADER,
+                description="service access key",
+                type=openapi.TYPE_STRING,
+            ),
+            openapi.Parameter(
+                "X-PinTalk-Secret-Key",
+                openapi.IN_HEADER,
+                description="service secret key",
+                type=openapi.TYPE_STRING,
+            ),
+        ],
         responses={
             200: openapi.Response("user", UserSerializer),
             400: "Passwords doesn't match",
         },
-    )
-    def get(self, request, *args, **kwargs) -> Response:
-        access_key = request.headers["X-PinTalk-Access-Key"]
-        secret_key = request.headers["X-PinTalk-Secret-Key"]
+    ),
+)
+class ClientProfileView(generics.RetrieveAPIView):
+    permission_classes = [AuthenticatedClientOnly]
+    serializer_class = ClientSerializer
+    queryset = User.objects.all()
+
+    def get_object(self):
+        access_key = self.request.headers.get("X-PinTalk-Access-Key", None)
+        secret_key = self.request.headers.get("X-PinTalk-Secret-Key", None)
 
         try:
-            instance = get_object_or_404(
-                User, access_key=access_key, secret_key=secret_key
-            )
+            obj = get_object_or_404(User, access_key=access_key, secret_key=secret_key)
         except Http404:
-            raise AuthenticationFailed("Invalid access key or secret key")
+            raise AuthenticationFailed("invalid access_key or secret_key")
 
-        serializer = self.get_serializer(instance)
+        self.check_object_permissions(self.request, obj)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return obj
