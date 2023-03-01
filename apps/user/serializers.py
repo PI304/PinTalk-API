@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
 from apps.user.models import User
@@ -5,6 +6,10 @@ from apps.user.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     profile_image = serializers.ImageField(required=False, use_url=True)
+    password = serializers.CharField(
+        write_only=True,
+        required=True,
+    )
 
     class Meta:
         model = User
@@ -20,20 +25,22 @@ class UserSerializer(serializers.ModelSerializer):
             "service_domain",
             "is_deleted",
             "profile_image",
+            "password",
             "created_at",
             "updated_at",
         ]
         read_only_fields = [
             "id",
-            "email",
-            "service_name",
-            "service_expl",
+            "is_deleted",
             "access_key",
             "secret_key",
-            "is_deleted",
             "created_at",
             "updated_at",
         ]
+
+    def create(self, validated_data):
+        validated_data["password"] = make_password(validated_data.get("password"))
+        return super(UserSerializer, self).create(validated_data)
 
 
 class ClientSerializer(serializers.ModelSerializer):
