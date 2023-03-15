@@ -166,7 +166,9 @@ class CheckDuplicateUsernameView(APIView):
             raise DuplicateInstance("Provided email already exists")
 
         res = Response({"email": email}, status=status.HTTP_200_OK)
-        res.set_cookie("email_duplication_check", "complete", max_age=3600)
+        res.set_cookie(
+            "email_duplication_check", "complete", max_age=3600, samesite="None"
+        )
 
         return res
 
