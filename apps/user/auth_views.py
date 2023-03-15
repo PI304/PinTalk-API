@@ -1,4 +1,5 @@
 from django.contrib.auth.models import update_last_login
+from django.core.signing import Signer
 from django.http import JsonResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -133,7 +134,7 @@ class SecessionView(APIView):
 
 
 class CheckDuplicateUsernameView(APIView):
-    authentication_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Check if there's duplicate email (username)",
@@ -249,6 +250,8 @@ class PasswordResetView(APIView):
 
 
 class EmailVerification(APIView):
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Send verification code to user email when signing up",
         request_body=openapi.Schema(
@@ -267,10 +270,13 @@ class EmailVerification(APIView):
 
         email = request.data.get("email")
         generated_code = UserService.generate_random_code(5, 8)
-
+        signer = Signer()
+        signed_cookie_obj = signer.sign_object(
+            {"email_verification_code": generated_code}
+        )
         # set code in cookie
         res = Response({"detail": "email sent"}, status=status.HTTP_200_OK)
-        res.set_cookie("email_verification_code", generated_code, max_age=300)
+        res.set_cookie("email_verification_code", signed_cookie_obj, max_age=300)
 
         # send email
         email = EmailMessage(
@@ -292,6 +298,8 @@ class EmailVerification(APIView):
 
 
 class EmailConfirmation(APIView):
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Confirm code sent to email for signing up",
         request_body=openapi.Schema(
@@ -299,6 +307,7 @@ class EmailConfirmation(APIView):
             properties={"verification_code": openapi.Schema(type=openapi.TYPE_STRING)},
         ),
         responses={
+            204: "success",
             400: "No cookies attached",
             409: "Verification code does not match",
         },
@@ -306,15 +315,19 @@ class EmailConfirmation(APIView):
     def post(self, request, *args, **kwargs):
         if "email_verification_code" in request.COOKIES:
             code_cookie = request.COOKIES.get("email_verification_code")
+            signer = Signer()
+            unsigned_code_cookie = signer.unsign_object(code_cookie).get(
+                "email_verification_code"
+            )
         else:
             raise UnprocessableException("proceed email verification first")
 
         code_input = request.data.get("verification_code")
-        if code_cookie == code_input:
-            res = Response(status=status.HTTP_200_OK)
+        if unsigned_code_cookie == code_input:
+            res = Response(status=status.HTTP_204_NO_CONTENT)
             if "email_confirmation_code" in request.COOKIES:
                 res.delete_cookie("email_verification_code")
-            res.set_cookie("email_confirmation", "complete", max_age=3600)
+            res.set_cookie("email_confirmation", "complete", max_age=600)
             return res
         else:
             raise ConflictException("Verification code does not match")
