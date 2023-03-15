@@ -153,6 +153,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 # SESSION
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_DOMAIN = ["http://localhost:3000"]
 
 TEMPLATES = [
     {
