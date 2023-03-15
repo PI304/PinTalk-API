@@ -72,7 +72,9 @@ class UserManager(BaseUserManager):
             base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf8").rstrip("=\n"),
         )
         extra_fields.setdefault("secret_key", secrets.token_hex(32))
-        extra_fields.setdefault("service_name", "Chat Box")
+        extra_fields.setdefault("service_name", "Pintalk")
+        extra_fields.setdefault("profile_name", "Pintalk")
+        extra_fields.setdefault("service_expl", "put a pin")
 
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
