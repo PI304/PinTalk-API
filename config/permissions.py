@@ -11,3 +11,19 @@ class AuthenticatedClientOnly(BasePermission):
             return False
 
         return True
+
+
+class HostOnly(BasePermission):
+    message = "only the host can modify chatroom resources"
+
+    def has_object_permission(self, request, view, obj) -> bool:
+        if obj.host_id != request.user.id:
+            return False
+
+
+class RequestUserOnly(BasePermission):
+    message = "only request user can modify user configuration"
+
+    def has_object_permission(self, request, view, obj) -> bool:
+        if obj.user_id != request.user.id:
+            return False
