@@ -30,6 +30,8 @@ class ChatroomSerializer(serializers.ModelSerializer):
             "latest_msg",
             "is_closed",
             "closed_at",
+            "is_fixed",
+            "fixed_at",
             "created_at",
             "updated_at",
         ]
@@ -39,6 +41,7 @@ class ChatroomSerializer(serializers.ModelSerializer):
             "name",
             "latest_msg",
             "closed_at",
+            "fixed_at",
             "created_at",
             "updated_at",
         ]
@@ -53,12 +56,20 @@ class ChatroomClientSerializer(serializers.ModelSerializer):
             "host",
             "guest",
             "name",
-            "is_deleted",
-            "deleted_at",
+            "is_closed",
+            "closed_at",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["host", "guest", "name", "created_at", "updated_at"]
+        read_only_fields = [
+            "host",
+            "guest",
+            "name",
+            "is_closed",
+            "closed_at",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class ChatMessageInMemorySerializer(serializers.Serializer):

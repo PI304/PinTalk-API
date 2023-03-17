@@ -1,3 +1,4 @@
+import datetime
 from urllib.parse import unquote, quote
 from enum import Enum
 
@@ -35,9 +36,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         chatroom = await self.get_chatroom_instance()
 
-        if chatroom.is_deleted:
-            # chatroom 이 이미 삭제되어 대화불가 상태일 때
-            raise DenyConnection("This chatroom is deleted")
+        if chatroom.is_closed:
+            # chatroom 이 종료된 상태일 때
+            await self.reopen_chatroom(chatroom)
 
         # Check user
         if isinstance(self.user, AnonymousUser):
@@ -147,6 +148,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def save_message_db(self, msg_obj: dict) -> None:
         ChatroomService.save_message(self.room_group_name.split("_")[1], msg_obj)
+
+    @database_sync_to_async
+    def reopen_chatroom(self, instance: Chatroom) -> None:
+        instance.is_closed = False
+        instance.updated_at = datetime.datetime.now()
+        instance.save(update_fields=["isclosed", "updated_at"])
 
     @database_sync_to_async
     def get_chatroom_instance(self) -> Chatroom:
