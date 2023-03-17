@@ -28,6 +28,8 @@ class ChatroomSerializer(serializers.ModelSerializer):
             "guest",
             "name",
             "latest_msg",
+            "is_closed",
+            "closed_at",
             "created_at",
             "updated_at",
         ]
@@ -36,6 +38,7 @@ class ChatroomSerializer(serializers.ModelSerializer):
             "host",
             "name",
             "latest_msg",
+            "closed_at",
             "created_at",
             "updated_at",
         ]

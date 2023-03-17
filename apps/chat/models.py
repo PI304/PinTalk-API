@@ -11,8 +11,8 @@ class Chatroom(TimeStampMixin):
     latest_msg = models.ForeignKey(
         "ChatMessage", on_delete=models.DO_NOTHING, related_name="latest_msg", null=True
     )
-    is_deleted = models.BooleanField(null=False, default=False)
-    deleted_at = models.DateTimeField(null=True)
+    is_closed = models.BooleanField(default=False, null=False)
+    closed_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "chatroom"
