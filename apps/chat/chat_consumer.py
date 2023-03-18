@@ -44,12 +44,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if isinstance(self.user, AnonymousUser):
             # Guest
             self.user_type = UserType.GUEST
-            # Check guest name
-            query_string = self.scope["query_string"].decode("utf-8")
-            if "name=" not in query_string:
-                raise DenyConnection("Query string for 'name' missing")
-
-            self.user = unquote(query_string.split("=")[1])
+            self.user = chatroom.guest
             self.host = user
 
             print(f"Anonymous guest <{self.user}> joined the chat room")
@@ -60,7 +55,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             print(f"Registered user <{self.user.email}> joined the chat room")
 
-            self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
+        self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
 
         try:
             # Join room group
