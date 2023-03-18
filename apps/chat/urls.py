@@ -1,35 +1,34 @@
 from django.urls import path
 from .views import (
     ChatroomListView,
-    ChatroomDestroyView,
+    ChatroomDetailView,
     ChatroomExportView,
     ChatroomClientCreateView,
     # ChatroomClientRetrieveView,
     ChatroomClientResumeView,
+    ChatroomMessageView,
 )
 
 urlpatterns = [
-    path("client/", ChatroomClientCreateView.as_view(), name="create-chatroom"),
-    # path(
-    #     "client/<str:guest>/",
-    #     ChatroomClientRetrieveView.as_view(),
-    #     name="create-chatroom",
-    # ),
+    path("", ChatroomClientCreateView.as_view(), name="create-chatroom"),
+    path("chatrooms/", ChatroomListView.as_view(), name="chatroom-list"),
     path(
-        "client/<str:room_name>/resume",
-        ChatroomClientResumeView.as_view(),
-        name="resume-chatroom",
+        "chatrooms/<int:pk>/chat-messages/",
+        ChatroomMessageView.as_view(),
+        name="chatroom-messages",
     ),
     path(
-        "<str:access_key>/chatrooms/", ChatroomListView.as_view(), name="chatroom-list"
-    ),
-    path(
-        "chatrooms/<str:room_name>/",
-        ChatroomDestroyView.as_view(),
+        "chatrooms/<int:pk>/",
+        ChatroomDetailView.as_view(),
         name="leave-chatroom",
     ),
+    # path(
+    #     "chatrooms/<int:pk>/",
+    #     ChatroomResumeView.as_view(),
+    #     name="leave-chatroom",
+    # ),
     path(
-        "chatrooms/<str:room_name>/export",
+        "chatrooms/<int:pk>/download",
         ChatroomExportView.as_view(),
         name="export-chatroom-messages",
     ),

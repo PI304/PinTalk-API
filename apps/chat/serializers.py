@@ -63,7 +63,6 @@ class ChatroomClientSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "host",
-            "guest",
             "name",
             "is_closed",
             "closed_at",

@@ -26,7 +26,7 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 
 from .refresh_token_authenticator import RefreshTokenAuthentication
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserConfigurationSerializer
 from .services import UserService
 
 
@@ -74,6 +74,10 @@ class BasicSignUpView(APIView):
                 secret_key=UserService.generate_secret_key(),
             )
 
+        # Create UserConfig
+        c_serializer = UserConfigurationSerializer(data={})
+        c_serializer.save(user_id=serializer.data.get("id"))
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -105,7 +109,6 @@ class BasicSignInView(APIView):
 
         data = serializer.data
         data["access_token"] = access_token
-        data["refresh_token"] = refresh_token
 
         res = Response(
             data,
@@ -115,6 +118,8 @@ class BasicSignInView(APIView):
             settings.SIMPLE_JWT["AUTH_COOKIE"],
             refresh_token,
             max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
+            httponly=True,
+            samesite="None",
             secure=True,
         )  # 7 days
         return res
@@ -167,7 +172,11 @@ class CheckDuplicateUsernameView(APIView):
 
         res = Response({"email": email}, status=status.HTTP_200_OK)
         res.set_cookie(
-            "email_duplication_check", "complete", max_age=3600, samesite="None"
+            "email_duplication_check",
+            "complete",
+            max_age=3600,
+            samesite="None",
+            httponly=True,
         )
 
         return res
@@ -278,7 +287,14 @@ class EmailVerification(APIView):
         )
         # set code in cookie
         res = Response({"detail": "email sent"}, status=status.HTTP_200_OK)
-        res.set_cookie("email_verification_code", signed_cookie_obj, max_age=300)
+        res.set_cookie(
+            "email_verification_code",
+            signed_cookie_obj,
+            max_age=300,
+            httponly=True,
+            secure=True,
+            samesite="None",
+        )
 
         # send email
         email = EmailMessage(
@@ -329,7 +345,14 @@ class EmailConfirmation(APIView):
             res = Response(status=status.HTTP_204_NO_CONTENT)
             if "email_confirmation_code" in request.COOKIES:
                 res.delete_cookie("email_verification_code")
-            res.set_cookie("email_confirmation", "complete", max_age=600)
+            res.set_cookie(
+                "email_confirmation",
+                "complete",
+                max_age=600,
+                secure=True,
+                httponly=True,
+                samesite="None",
+            )
             return res
         else:
             raise ConflictException("Verification code does not match")
