@@ -116,3 +116,18 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
 
     def __repr__(self):
         return f"User({self.id}, {self.get_username()})"
+
+
+class UserConfiguration(TimeStampMixin):
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
+    use_online_status = models.BooleanField(null=False, default=True)
+
+    class Meta:
+        db_table = "user_config"
+
+    def __str__(self):
+        return f"[{self.id}] user({self.user_id})"
+
+    def __repr__(self):
+        return f"UserConfig({self.id}, {self.user_id})"

@@ -11,9 +11,13 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
-from apps.user.models import User
-from apps.user.serializers import UserSerializer, ClientSerializer
-from config.permissions import AuthenticatedClientOnly
+from apps.user.models import User, UserConfiguration
+from apps.user.serializers import (
+    UserSerializer,
+    ClientSerializer,
+    UserConfigurationSerializer,
+)
+from config.permissions import AuthenticatedClientOnly, RequestUserOnly
 
 
 @method_decorator(
@@ -123,3 +127,27 @@ class ClientProfileView(generics.RetrieveAPIView):
         self.check_object_permissions(self.request, obj)
 
         return obj
+
+
+@method_decorator(
+    name="patch",
+    decorator=swagger_auto_schema(
+        operation_summary="Updates user's configuration",
+        operation_description="유저의 환경설정을 조작합니다",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "use_online_status": openapi.Schema(
+                    type=openapi.TYPE_BOOLEAN,
+                    description="온라인 접속 여부를 표시할 지 선택",
+                    default=True,
+                )
+            },
+        ),
+    ),
+)
+class UserConfigView(generics.UpdateAPIView):
+    allowed_methods = ["PATCH"]
+    serializer_class = UserConfigurationSerializer
+    queryset = UserConfiguration.objects.all()
+    permission_classes = [RequestUserOnly]

@@ -3,7 +3,7 @@ import uuid
 from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 
-from apps.user.models import User
+from apps.user.models import User, UserConfiguration
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -66,3 +66,10 @@ class ClientSerializer(serializers.ModelSerializer):
             "service_name",
             "profile_image",
         ]
+
+
+class UserConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserConfiguration
+        fields = "__all__"
+        read_only_fields = ["id", "created_at", "updated_at", "user"]

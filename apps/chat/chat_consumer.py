@@ -1,3 +1,4 @@
+import datetime
 from urllib.parse import unquote, quote
 from enum import Enum
 
@@ -35,20 +36,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         chatroom = await self.get_chatroom_instance()
 
-        if chatroom.is_deleted:
-            # chatroom 이 이미 삭제되어 대화불가 상태일 때
-            raise DenyConnection("This chatroom is deleted")
+        if chatroom.is_closed:
+            # chatroom 이 종료된 상태일 때
+            await self.reopen_chatroom(chatroom)
 
         # Check user
         if isinstance(self.user, AnonymousUser):
             # Guest
             self.user_type = UserType.GUEST
-            # Check guest name
-            query_string = self.scope["query_string"].decode("utf-8")
-            if "name=" not in query_string:
-                raise DenyConnection("Query string for 'name' missing")
-
-            self.user = unquote(query_string.split("=")[1])
+            self.user = chatroom.guest
             self.host = user
 
             print(f"Anonymous guest <{self.user}> joined the chat room")
@@ -59,7 +55,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             print(f"Registered user <{self.user.email}> joined the chat room")
 
-            self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
+        self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
 
         try:
             # Join room group
@@ -147,6 +143,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def save_message_db(self, msg_obj: dict) -> None:
         ChatroomService.save_message(self.room_group_name.split("_")[1], msg_obj)
+
+    @database_sync_to_async
+    def reopen_chatroom(self, instance: Chatroom) -> None:
+        instance.is_closed = False
+        instance.updated_at = datetime.datetime.now()
+        instance.save(update_fields=["isclosed", "updated_at"])
 
     @database_sync_to_async
     def get_chatroom_instance(self) -> Chatroom:

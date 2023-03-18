@@ -57,7 +57,6 @@ THIRD_PARTY_APPS = [
 
 DJANGO_CORE_APPS = [
     "daphne",
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -102,7 +101,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "config.middlewares.add_headers.AddHeaders",
     "config.middlewares.request_middleware.RequestMiddleware",
-    "config.middlewares.check_headers.CheckHeaders",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -151,18 +149,11 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 #     "http://localhost:3000",
 # ]
 
-# SESSION
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_COOKIE_DOMAIN = ["http://3.34.7.189"]
-SESSION_COOKIE_HTTPONLY = True
+CSRF_USE_SESSIONS = False
 SESSION_COOKIE_SECURE = False
-# SESSION_COOKIE_SAMESITE = "None"
-
-SECURE_SSL_REDIRECT = False
-
 CSRF_COOKIE_SECURE = False
-# CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SAMESITE = None
+SESSION_COOKIE_SAMESITE = None
 
 TEMPLATES = [
     {
