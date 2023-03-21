@@ -9,6 +9,7 @@ class Chatroom(TimeStampMixin):
     guest = models.CharField(max_length=20, null=False, blank=False)
     name = models.CharField(max_length=22, null=False, blank=False)
     latest_msg = models.CharField(max_length=2000, null=True)
+    latest_msg_at = models.DateTimeField(null=True)
     last_checked_at = models.DateTimeField(null=True)
     is_closed = models.BooleanField(default=False, null=False)
     closed_at = models.DateTimeField(null=True)
