@@ -82,7 +82,11 @@ class ChatroomService(object):
     @staticmethod
     def get_latest_message(group_name: str, redis_conn) -> Union[None, dict]:
         latest_message = redis_conn.zrevrangebyscore(
-            group_name, datetime.now().strftime("%Y%m%d%H%M%S"), "-9999999999", 0, 1
+            group_name,
+            datetime.now().strftime("%Y%m%d%H%M%S"),
+            "-9999999999",
+            start=0,
+            num=1,
         )
         if len(latest_message) == 0:
             return None
@@ -91,18 +95,22 @@ class ChatroomService(object):
             return dict(json.loads(json_dict))
 
     @staticmethod
-    def save_latest_message(chatroom: Chatroom, latest_msg_obj: dict) -> dict:
-        serializer = ChatroomSerializer(
-            chatroom,
-            data=dict(
-                last_checked_at=latest_msg_obj.get("datetime"),
-                latest_msg=latest_msg_obj.get("message"),
-            ),
+    def save_latest_message(
+        chatroom: Chatroom, latest_msg_obj: dict, is_guest: bool = False
+    ) -> dict:
+        data = dict(
+            latest_msg_at=latest_msg_obj.get("datetime"),
+            latest_msg=latest_msg_obj.get("message"),
         )
+        if not is_guest:
+            data["last_checked_at"] = datetime.now()
+
+        serializer = ChatroomSerializer(chatroom, data=data, partial=True)
 
         if serializer.is_valid(raise_exception=True):
             serializer.save(updated_at=datetime.now())
 
+        print(serializer.data)
         return serializer.data
 
     @staticmethod

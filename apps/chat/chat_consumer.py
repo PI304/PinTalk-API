@@ -139,7 +139,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             self.room_group_name, self.conn
         )
 
-        ChatroomService.save_latest_message(self.chatroom, latest_message)
+        if self.user_type == UserType.GUEST:
+            ChatroomService.save_latest_message(
+                self.chatroom, latest_message, is_guest=True
+            )
+        else:
+            ChatroomService.save_latest_message(self.chatroom, latest_message)
 
     @database_sync_to_async
     def save_message_db(self, msg_obj: dict) -> None:
