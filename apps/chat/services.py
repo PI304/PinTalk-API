@@ -11,8 +11,12 @@ from django.utils import timezone
 from rest_framework.request import Request
 
 from apps.chat.models import Chatroom, ChatMessage
-from apps.chat.serializers import ChatMessageInMemorySerializer, ChatMessageSerializer
-from config.exceptions import InstanceNotFound
+from apps.chat.serializers import (
+    ChatMessageInMemorySerializer,
+    ChatMessageSerializer,
+    ChatroomSerializer,
+)
+from config.exceptions import InvalidInputException
 
 
 class ChatroomService(object):
@@ -41,27 +45,32 @@ class ChatroomService(object):
         if serializer.is_valid(raise_exception=True):
             data = serializer.data
             json_msg = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            score = data["datetime"].replace("-", "").replace("T", "").replace(":", "")
             rd.zadd(
                 group_name,
-                {
-                    json_msg: datetime.fromtimestamp(data["timestamp"]).strftime(
-                        "%Y%m%d%H%M%S"
-                    )
-                },
+                {json_msg: score},
             )
             return serializer.validated_data
 
     @staticmethod
     def get_past_messages(
-        group_name: str, redis_conn, starting_point: Union[int, None] = None
+        group_name: str, redis_conn, starting_point: Union[str, None] = None
     ) -> List[dict]:
         if starting_point is None:
-            from_time = datetime.now().strftime("%Y%m%d%H%M%S")
+            from_score = datetime.now().strftime("%Y%m%d%H%M%S")
+            a_week = str(int(from_score) - 7000000)
         else:
-            from_time = datetime.fromtimestamp(starting_point - 1)
+            try:
+                from_score = datetime.strptime(starting_point, "%Y-%m-%dT%H:%M:%S")
+            except ValueError:
+                raise InvalidInputException(
+                    "Incorrect data format, should be YYYY-MM-DDTHH:MM:SS"
+                )
 
-        a_week = str(int(from_time) - 7000000)
-        messages = redis_conn.zrangebyscore(group_name, a_week, from_time, 0, 50)
+            from_score = int(str(from_score)) - 1
+            a_week = str(from_score - 7000000)
+
+        messages = redis_conn.zrangebyscore(group_name, a_week, from_score, 0, 50)
 
         decoded_messages: List[dict] = []
 
@@ -73,13 +82,36 @@ class ChatroomService(object):
     @staticmethod
     def get_latest_message(group_name: str, redis_conn) -> Union[None, dict]:
         latest_message = redis_conn.zrevrangebyscore(
-            group_name, datetime.now().strftime("%Y%m%d%H%M%S"), "-9999999999", 0, 1
+            group_name,
+            datetime.now().strftime("%Y%m%d%H%M%S"),
+            "-9999999999",
+            start=0,
+            num=1,
         )
         if len(latest_message) == 0:
             return None
         else:
             json_dict = latest_message[0].decode("utf-8")
             return dict(json.loads(json_dict))
+
+    @staticmethod
+    def save_latest_message(
+        chatroom: Chatroom, latest_msg_obj: dict, is_guest: bool = False
+    ) -> dict:
+        data = dict(
+            latest_msg_at=latest_msg_obj.get("datetime"),
+            latest_msg=latest_msg_obj.get("message"),
+        )
+        if not is_guest:
+            data["last_checked_at"] = datetime.now()
+
+        serializer = ChatroomSerializer(chatroom, data=data, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(updated_at=datetime.now())
+
+        print(serializer.data)
+        return serializer.data
 
     @staticmethod
     def delete_chatroom_mem(room_name: str, redis_conn=None) -> None:
@@ -91,26 +123,15 @@ class ChatroomService(object):
         rd.delete("chat_" + room_name)
 
     @staticmethod
-    def save_message(room_name: str, msg_obj: dict) -> Chatroom:
-        try:
-            chatroom = get_object_or_404(Chatroom, name=room_name)
-        except Http404:
-            raise InstanceNotFound("chatroom with the provided name does not exist")
-
-        data = {
-            "message": msg_obj["message"],
-            "is_host": msg_obj["is_host"],
-        }
-
-        serializer = ChatMessageSerializer(data=data)
+    def save_message(
+        chatroom_id: int,
+        msg_obj: dict,
+    ) -> dict:
+        serializer = ChatMessageSerializer(data=msg_obj)
         if serializer.is_valid(raise_exception=True):
-            serializer.save(chatroom_id=chatroom.id)
+            serializer.save(chatroom_id=chatroom_id)
 
-        chatroom.latest_msg_id = serializer.data.get("id")
-        chatroom.updated_at = timezone.now()
-        chatroom.save(update_fields=["latest_msg", "updated_at"])
-
-        return chatroom
+        return serializer.data
 
 
 class ChatroomStatusService:

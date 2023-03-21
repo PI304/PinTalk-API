@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   redis:
-    build: ./redis
+    build: infra/redis
     command: redis-server --port 6379
     restart: always
     container_name: pintalk-redis
@@ -40,7 +40,7 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.deploy
 
   server:
-    build: ./nginx
+    build: infra/nginx
     container_name: pintalk-nginx
     ports:
       - "80:80"

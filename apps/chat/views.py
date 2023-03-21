@@ -68,10 +68,8 @@ class ChatroomListView(generics.ListAPIView):
     queryset = Chatroom.objects.all()
 
     def get_queryset(self):
-        queryset = (
-            self.queryset.filter(host_id=self.request.user.id)
-            .select_related("latest_msg")
-            .order_by("-latest_msg__created_at")
+        queryset = self.queryset.filter(host_id=self.request.user.id).order_by(
+            "-updated_at"
         )
         return queryset
 
