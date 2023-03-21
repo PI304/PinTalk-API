@@ -16,6 +16,36 @@ class ChatMessageSerializer(serializers.ModelSerializer):
         ]
 
 
+class SimpleChatroomSerializer(serializers.ModelSerializer):
+    latest_msg = ChatMessageSerializer(read_only=True)
+
+    class Meta:
+        model = Chatroom
+        fields = [
+            "id",
+            "host",
+            "guest",
+            "name",
+            "latest_msg",
+            "is_closed",
+            "closed_at",
+            "is_fixed",
+            "fixed_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "host",
+            "name",
+            "latest_msg",
+            "closed_at",
+            "fixed_at",
+            "created_at",
+            "updated_at",
+        ]
+
+
 class ChatroomSerializer(serializers.ModelSerializer):
     host = UserSerializer(read_only=True)
     latest_msg = ChatMessageSerializer(read_only=True)

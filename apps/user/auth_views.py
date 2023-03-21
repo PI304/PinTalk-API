@@ -72,6 +72,7 @@ class BasicSignUpView(APIView):
             serializer.save(
                 access_key=UserService.generate_access_key(),
                 secret_key=UserService.generate_secret_key(),
+                uuid=UserService.generate_uuid(),
             )
 
         # Create UserConfig

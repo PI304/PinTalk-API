@@ -26,9 +26,6 @@ class UserType(Enum):
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
-        # Check Origin
-        user = await self.get_user_by_origin_header()
-        self.origin = user.service_domain
 
         # Check Chatroom
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -42,6 +39,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         # Check user
         if isinstance(self.user, AnonymousUser):
+            # Check Origin
+            user = await self.get_user_by_origin_header()
+            # self.origin = user.service_domain
+
             # Guest
             self.user_type = UserType.GUEST
             self.user = chatroom.guest

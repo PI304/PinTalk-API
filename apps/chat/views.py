@@ -21,6 +21,7 @@ from apps.chat.serializers import (
     ChatroomSerializer,
     ChatroomClientSerializer,
     ChatMessageSerializer,
+    SimpleChatroomSerializer,
 )
 from apps.chat.services import ChatroomService
 from apps.user.models import User
@@ -58,13 +59,12 @@ guest_name_param = openapi.Parameter(
         operation_summary="Get user's chatroom list",
         operation_description="요청을 보내는 유저의 모든 채팅방을 가져옵니다",
         responses={
-            200: openapi.Response("Success", ChatroomSerializer),
             404: "Not found",
         },
     ),
 )
 class ChatroomListView(generics.ListAPIView):
-    serializer_class = ChatroomSerializer
+    serializer_class = SimpleChatroomSerializer
     queryset = Chatroom.objects.all()
 
     def get_queryset(self):

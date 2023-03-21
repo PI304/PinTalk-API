@@ -85,6 +85,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)
     email = models.EmailField(max_length=64, unique=True, null=False)
+    uuid = models.CharField(max_length=22, null=False)
     access_key = models.CharField(max_length=22, null=False, blank=False)
     secret_key = models.CharField(max_length=64, null=False, blank=False)
     service_name = models.CharField(max_length=50, null=False, blank=False)
