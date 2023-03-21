@@ -5,6 +5,7 @@ import base64
 import secrets
 import random
 
+import shortuuid
 from rest_framework.request import Request
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -44,3 +45,7 @@ class UserService(object):
         print(refresh)
 
         return str(refresh.access_token), str(refresh)
+
+    @staticmethod
+    def generate_uuid():
+        return shortuuid.uuid()
