@@ -6,7 +6,8 @@
 1. [Managing Chat Message Data](#1-managing-chat-message-data)
 2. [Websocket Connections](#2-websocket-connections)
 3. [Checking Online Status](#3-checking-online-status)
-4. [Email Notifications](#4-email-notifications)
+4. [Checking New Messages](#4-checking-new-messages)
+5. [Email Notifications](#5-email-notifications)
 
 
 
@@ -23,7 +24,7 @@ PinTalk 서비스에서는 유저 정보를 제외한, 채팅과 관련된 사�
 삭제합니다. 
 아래는 사용자 데이터가 삭제되는 케이스들 입니다.
 
-1. 채팅 종료 후 (```is_closed```) 24 시간이 지나면, Redis 에 있는 메시지 데이터는 삭제됩니다.
+1. 채팅 종료 시 (```is_closed```), Redis 에 있는 메시지 데이터는 삭제됩니다.
 2. 채팅 종료 후 (```is_closed```) 아무런 활동 없이, 즉 재개(resume) 없이 7일이 지나면, MySQL 에 저장된 메시지 데이터가 삭제됩니다. (이때, 1번에 의해 Redis 내 데이터는 이미 삭제된 상태입니다.)
 3. 관리자 페이지에서 '채팅 나가기' 를 수행하면, Redis 와 MySQL 에 남아 있는 모든 채팅 메시지가 즉시 삭제됩니다.
 
@@ -83,18 +84,13 @@ X-PinTalk-Secret-Key: 669da7488fe5c7baee216ba0f8f9b8e7f93113b40b0e8d658d60b05a09
   "previous": "string",
   "results": [
     {
-      "id": 0,
+      "id": 0, 
       "host": 0,
       "guest": "string",
       "name": "string",
-      "latestMsg": {
-        "id": 0,
-        "chatroom": 0,
-        "message": "string",
-        "isHost": true,
-        "createdAt": "2023-03-21T03:58:57.178Z",
-        "updatedAt": "2023-03-21T03:58:57.178Z"
-      },
+      "latestMsg": "string", 
+      "latestMsgAt": "2023-03-21T03:58:57.178Z", 
+      "lastCheckedAt": "2023-03-21T03:58:57.178Z",
       "isClosed": true,
       "closedAt": "2023-03-21T03:58:57.178Z",
       "isFixed": true,
@@ -149,12 +145,21 @@ websocket 에 성공적으로 연결되기 위해선 credential 확인이 필요
 메시지를 주고 받을 때에는 합의된 형태가 있어야 합니다. 기본적인 형태는 아래와 같습니다.
 
 ```javascript
+// datetime format
+const getDatetime = () => {
+   const now = new Date();
+   now.setHours(now.getHours() + 9);
+   const dateStr = now.toISOString().substring(0, 19);
+
+   return dateStr;
+}
+
 // 메시지를 보낼 때
 chatSocket.send(JSON.stringify({
      type: 'chat_message',
      is_host: false,
      message: message,
-     timestamp: Date.now()
+     datetime: getDatetime()
  }));
 
 // 메시지를 받을 때
@@ -166,7 +171,7 @@ chatSocket.onmessage = function(e) {
 ```
 - ```type```: 메시지의 종류를 명시합니다. 일반적인 채팅 메시지일 경우, ```notice```, 그 외 다른 알림은 ```notice``` 타입을 가집니다.
 - ```is_host```: 메시지를 작성한 주체를 명시합니다. ```true``` 일 경우, 사용자가 작성한 메시지이며, ```false``` 인 경우 게스트가 작성한 메시지입니다.
-- ```timestamp```: 메시지를 보낸 시각이 timestamp 형태로 담겨 있습니다.
+- ```datetime```: 메시지를 보낸 시각이 ```%T-%m-%dT-%H:%M:%S``` 형태로 담겨 있습니다.
 - ```message```: 실제 메시지의 내용입니다.
 
 > ```notice``` 타입의 메시지는 online status 확인용 웹소켓에서 주로 쓰입니다. [3. Checking Online Status](#3-checking-online-status) 섹션을 확인하세요.
@@ -206,13 +211,28 @@ online_message = {
      "type": "notice",
      "is_host": true,
      "status": "online",
-     "timestamp": 1679375028,
+     "datetime": "2023-03-23T12:22:12",
 }
  ```
 
 **PinTalk 패키지 개발 시, 해당 웹소켓에 연결하여 전송받는 메시지들을 모니터링하고, 그 내용에 따라 status 를 반영해주어야 합니다.**
 
-## 4. Email Notifications
+
+## 4. Checking New Messages
+관리자 페이지에서 사용자는 읽지 않은 새로운 메시지가 있는 채팅방을 구분할 수 있어야 합니다. 또한 새로운 메시지의
+내용 역시 채팅방 목록에서 미리 볼 수 있어야 합니다. 이를 위해 chatroom 데이터는 아래와 같은 필드들을 가지고 있습니다.
+전체 데이터는 섹션 [2. Websocket Connections](#2-websocket-connections) 에서 다시 확인해볼 수 있습니다.
+
+* ```lastestMsg```: 가장 최근에 보낸 메시지의 내용
+* ```latestMsgAt```: 가장 최근에 보낸 메시지의 시간
+* ```lastCheckedAt```: 사용자가 마지막으로 채팅방을 확인한 시간
+
+
+```latestMsgAt``` 의 시간이 ```lastCheckedAt``` 의 시간보다 더 최근의 시간일 경우,
+사용자가 확인하지 않은 새로운 메시지가 도착했다는 것을 의미합니다. 
+
+
+## 5. Email Notifications
 게스트나 사용자가 채팅방에 입장해있는 상태가 아닐 때 메시지가 도착한다면 이메일을 보냅니다. 
 
 *이 피처는 추후 추가 예정입니다.*
