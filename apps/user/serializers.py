@@ -18,6 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "email",
+            "uuid",
             "profile_name",
             "description",
             "access_key",
@@ -33,6 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "uuid",
             "is_deleted",
             "access_key",
             "secret_key",
@@ -54,6 +56,7 @@ class ClientSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "email",
+            "uuid",
             "profile_name",
             "description",
             "service_name",
@@ -61,6 +64,7 @@ class ClientSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "email",
+            "uuid",
             "profile_name",
             "description",
             "service_name",
