@@ -21,7 +21,7 @@ media
 *$py.class
 
 ### Redis ###
-redis/redis_data
+infra/redis/redis_data
 
 ### macos ###
 .DS_Store
