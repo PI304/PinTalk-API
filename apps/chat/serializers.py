@@ -99,11 +99,11 @@ class ChatroomClientSerializer(serializers.ModelSerializer):
 
 class ChatMessageInMemorySerializer(serializers.Serializer):
     type = serializers.ChoiceField(
-        choices=["chat_message", "notice", "request", "status"]
+        choices=["chat_message", "notice", "request", "status"], required=True
     )
-    message = serializers.CharField(max_length=1000, min_length=1)
-    is_host = serializers.BooleanField()
-    datetime = serializers.CharField(max_length=19)
+    message = serializers.CharField(max_length=1000, min_length=1, required=True)
+    is_host = serializers.BooleanField(required=True)
+    datetime = serializers.CharField(max_length=19, required=True)
 
     class Meta:
         fields = ["type", "message", "is_host", "datetime"]
