@@ -42,7 +42,7 @@ class UserService(object):
     @staticmethod
     def generate_tokens(user: User):
         refresh = RefreshToken.for_user(user)
-        print(refresh)
+        # print(refresh)
 
         return str(refresh.access_token), str(refresh)
 

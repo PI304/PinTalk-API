@@ -107,6 +107,8 @@ class BasicSignInView(APIView):
         update_last_login(None, user)
         serializer = UserSerializer(user)
         access_token, refresh_token = UserService.generate_tokens(user)
+        print("access", access_token)
+        print("refresh", refresh_token)
 
         data = serializer.data
         data["access_token"] = access_token
