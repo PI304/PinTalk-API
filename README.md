@@ -6,8 +6,9 @@
 1. [Managing Chat Message Data](#1-managing-chat-message-data)
 2. [Websocket Connections](#2-websocket-connections)
 3. [Checking Online Status](#3-checking-online-status)
-4. [Checking New Messages](#4-checking-new-messages)
-5. [Email Notifications](#5-email-notifications)
+4. [Error Codes](#4-error-codes)
+5. [Checking New Messages](#5-checking-new-messages)
+6. [Email Notifications](#6-email-notifications)
 
 
 
@@ -183,6 +184,15 @@ chatSocket.onmessage = function(e) {
 #### 공통 상황
 1. 사용자가 로그인할 때, 관리자 페이지에서 새로운 웹소켓을 연결하고 연결을 유지합니다.
 2. 게스트가 채팅방에 입장할 때, 채팅방 관련 웹소켓이 아닌 사용자의 온라인 여부를 파악할 수 있는 새로운 웹소켓을 연결합니다.
+3. **게스트는 채팅방에 입장한 후, 아래와 같은 메시지를 보내야합니다.** 이 메시지가 전송된 시점에서 사용자가 접속해있는 상태라면. 사용자는 본인이 접속해있다는 메시지로 응답하기 때문입니다.
+   ```json
+   {
+      "type": "notice",
+      "is_host": false,
+      "message": "online",
+      "datetime": "2023-03-23T08:15:77"
+   }
+   ```
 
 #### Case 1: 게스트가 메시지를 보내기 전부터 사용자가 이미 로그인 해있을 때
 게스트가 status 확인용 웹소켓에 연결된 후, 사용자가 online 이라는 메시지를 웹소켓으로부터 바로 받게 됩니다.
@@ -194,8 +204,10 @@ chatSocket.onmessage = function(e) {
 #### Case 3: 사용자가 online 이었다가 중간에 offline 이 되었을 때
 사용자가 로그아웃을 하거나 관리자 페이지를 나가게 되면 status 확인용 웹소켓의 연결이 끊어집니다.
 게스트는 사용자가 disconnect 되었다는 메시지를 받게 됩니다.
+---
+status 확인용 websocket 에 연결하는 방법은 다음과 같습니다. 
 
-status 확인용 websocket 에 연결하는 방법은 다음과 같습니다.
+사용자 (관리자 페이지 쪽) 는 아래 uri 에 이전에 소개했던 것처럼 ```?token=sometoken``` 과 같이 쿼리 스트링을 추가해주어야 합니다.
 
 ```javascript
 const request_uri = `ws://3.34.7.189/ws/chat/${hostUuid}/status/`;
@@ -218,7 +230,14 @@ online_message = {
 **PinTalk 패키지 개발 시, 해당 웹소켓에 연결하여 전송받는 메시지들을 모니터링하고, 그 내용에 따라 status 를 반영해주어야 합니다.**
 
 
-## 4. Checking New Messages
+## 4. Error Codes
+웹소켓의 close event 에는 HTTP 프로토콜처럼 code 가 포함되어 있습니다. 보편적인 close event 의 code는 [여기 링크](https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code) 에서 확인해볼 수 있습니다.
+
+4000번부터는 custom error code 입니다. PinTalk 에서는 다음과 같은 커스텀 코드를 이용합니다.
+- **4000**: HTTP 의 Bad Request(400) 와 동일, 메시지의 형태가 약속에 어긋남
+- **4004**: HTTP 의 Not Found(404) 와 동일, 데이터 베이스에 요청한 리소스가 존재하지 않음
+
+## 5. Checking New Messages
 관리자 페이지에서 사용자는 읽지 않은 새로운 메시지가 있는 채팅방을 구분할 수 있어야 합니다. 또한 새로운 메시지의
 내용 역시 채팅방 목록에서 미리 볼 수 있어야 합니다. 이를 위해 chatroom 데이터는 아래와 같은 필드들을 가지고 있습니다.
 전체 데이터는 섹션 [2. Websocket Connections](#2-websocket-connections) 에서 다시 확인해볼 수 있습니다.
@@ -232,7 +251,7 @@ online_message = {
 사용자가 확인하지 않은 새로운 메시지가 도착했다는 것을 의미합니다. 
 
 
-## 5. Email Notifications
+## 6. Email Notifications
 게스트나 사용자가 채팅방에 입장해있는 상태가 아닐 때 메시지가 도착한다면 이메일을 보냅니다. 
 
 *이 피처는 추후 추가 예정입니다.*
