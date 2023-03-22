@@ -1,6 +1,8 @@
 import datetime
+import os
 from urllib.parse import unquote, quote
 from enum import Enum
+from dotenv import load_dotenv
 
 import redis
 from channels.db import database_sync_to_async
@@ -16,6 +18,8 @@ from apps.chat.models import Chatroom
 from apps.chat.serializers import ChatMessageSerializer
 from apps.chat.services import ChatroomService
 from apps.user.models import User
+
+load_dotenv()
 
 
 class UserType(Enum):
@@ -48,7 +52,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if self.user_type == UserType.GUEST:
             self.user = chatroom.guest
 
-        self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
+        self.conn = redis.StrictRedis(
+            host=os.environ.get("REDIS_HOST"), port=6379, db=0
+        )
 
         try:
             # Join room group

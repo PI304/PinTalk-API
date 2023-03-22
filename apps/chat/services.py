@@ -1,7 +1,9 @@
 import json
+import os
 import uuid
 from datetime import datetime
 from typing import Union, List
+from dotenv import load_dotenv
 
 import redis
 import shortuuid
@@ -17,6 +19,8 @@ from apps.chat.serializers import (
     ChatroomSerializer,
 )
 from config.exceptions import InvalidInputException
+
+load_dotenv()
 
 
 class ChatroomService(object):
@@ -37,7 +41,7 @@ class ChatroomService(object):
     @staticmethod
     def save_msg_in_mem(msg_obj: dict, group_name: str, redis_conn=None) -> ChatMessage:
         if redis_conn is None:
-            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+            rd = redis.StrictRedis(host=os.environ.get("REDIS_HOST"), port=6379, db=0)
         else:
             rd = redis_conn
 
@@ -116,7 +120,7 @@ class ChatroomService(object):
     @staticmethod
     def delete_chatroom_mem(room_name: str, redis_conn=None) -> None:
         if redis_conn is None:
-            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+            rd = redis.StrictRedis(host=os.environ.get("REDIS_HOST"), port=6379, db=0)
         else:
             rd = redis_conn
 
@@ -138,7 +142,7 @@ class ChatroomStatusService:
     @staticmethod
     def save_status_in_mem(msg_obj: dict, group_name: str, redis_conn) -> None:
         if redis_conn is None:
-            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+            rd = redis.StrictRedis(host=os.environ.get("REDIS_HOST"), port=6379, db=0)
         else:
             rd = redis_conn
 
@@ -155,7 +159,7 @@ class ChatroomStatusService:
     @staticmethod
     def delete_status_room_mem(group_name: str, redis_conn=None) -> None:
         if redis_conn is None:
-            rd = redis.StrictRedis(host="localhost", port=6379, db=0)
+            rd = redis.StrictRedis(host=os.environ.get("REDIS_HOST"), port=6379, db=0)
         else:
             rd = redis_conn
 

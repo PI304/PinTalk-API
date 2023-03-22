@@ -1,9 +1,11 @@
 import copy
+import os
 import time
 from datetime import datetime
 from typing import Union
 from urllib.parse import unquote, quote
 from enum import Enum
+from dotenv import load_dotenv
 
 import redis
 from channels.db import database_sync_to_async
@@ -21,6 +23,8 @@ from apps.chat.models import Chatroom
 from apps.chat.serializers import ChatMessageSerializer
 from apps.chat.services import ChatroomService, ChatroomStatusService
 from apps.user.models import User
+
+load_dotenv()
 
 
 class ActiveStatusConsumer(AsyncJsonWebsocketConsumer):
@@ -60,7 +64,9 @@ class ActiveStatusConsumer(AsyncJsonWebsocketConsumer):
 
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = "status_%s" % self.room_name
-        self.conn = redis.StrictRedis(host="localhost", port=6379, db=0)
+        self.conn = redis.StrictRedis(
+            host=os.environ.get("REDIS_HOST"), port=6379, db=0
+        )
 
         try:
             # Join room group
