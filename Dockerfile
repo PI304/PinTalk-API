@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8080
 
-CMD ["bash", "-c", "python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8080"]
+CMD ["bash", "-c", "python3 manage.py migrate && daphne -b 0.0.0.0 -p 8080 config.asgi.deploy:application"]
