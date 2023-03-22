@@ -1,3 +1,7 @@
+import django
+
+django.setup()
+
 from urllib.parse import parse_qs
 
 from channels.auth import AuthMiddlewareStack
