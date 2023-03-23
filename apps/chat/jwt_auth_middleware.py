@@ -1,4 +1,5 @@
 import django
+from channels.exceptions import DenyConnection
 
 django.setup()
 
@@ -48,7 +49,7 @@ class JwtAuthMiddleware(BaseMiddleware):
             except (InvalidToken, TokenError) as e:
                 # Token is invalid
                 print(e)
-                return AuthenticationFailed("invalid token")
+                raise DenyConnection()
 
             else:
                 # if token is valid, decode
