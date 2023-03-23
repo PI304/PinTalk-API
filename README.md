@@ -184,7 +184,7 @@ chatSocket.onmessage = function(e) {
 #### 공통 상황
 1. 사용자가 로그인할 때, 관리자 페이지에서 새로운 웹소켓을 연결하고 연결을 유지합니다.
 2. 게스트가 채팅방에 입장할 때, 채팅방 관련 웹소켓이 아닌 사용자의 온라인 여부를 파악할 수 있는 새로운 웹소켓을 연결합니다.
-3. **게스트는 채팅방에 입장한 후, 아래와 같은 메시지를 보내야합니다.** 이 메시지가 전송된 시점에서 사용자가 접속해있는 상태라면. 사용자는 본인이 접속해있다는 메시지로 응답하기 때문입니다.
+3. **게스트와 사용자 모두 채팅방에 입장한 후 (onconnect 이벤트), 아래와 같은 메시지를 보내야합니다.** 
    ```json
    {
       "type": "notice",
@@ -193,24 +193,28 @@ chatSocket.onmessage = function(e) {
       "datetime": "2023-03-23T08:15:77"
    }
    ```
+4. **입장할 때 뿐만 아니라 notice 타입의 메시지가 수신될 때마다 (onmessage 이벤트)**, 상대에게 본인의 상태를 알리기 위해 위와 같은 메시지를 보내줘야 합니다.
+
+> NPM 패키지 개발자와 관리자 페이지 개발자 모두 ```onconnect```와 ```onmessage``` 이벤트가 잘 부착되어 있는지 확인해야 합니다.
 
 #### Case 1: 게스트가 메시지를 보내기 전부터 사용자가 이미 로그인 해있을 때
-게스트가 status 확인용 웹소켓에 연결된 후, 사용자가 online 이라는 메시지를 웹소켓으로부터 바로 받게 됩니다.
+게스트가 status 확인용 웹소켓에 연결한 후 본인의 status 를 형식이 맞게 send 합니다. 이때 사용자가 온라인 상태라 
+게스트로부터 상태 메시지를 받게 되었다면, 본인의 status 역시 send 해줍니다.
 
 #### Case 2: 사용자가 offline 이었다가 중간에 접속하여 online 이 되었을 때
-게스트가 status 확인용 websocket 에 접속하는 시점에 사용자가 offline 이라면 그 어떤 메시지도 오지 않습니다.
-중간에 사용자가 접속하여 online 상태가 되면 사용자가 online 이라는 메시지를 받게 됩니다.
+게스트가 status 확인용 websocket 에 접속하고 상태를 알리는 메시지를 보냈을 때 사용자가 offline 이라면 그 어떤 메시지도 오지 않습니다.
+중간에 사용자가 접속하여 본인의 status 를 알리는 메시지를 보내게 되면 사용자가 online 상태가 되었음을 알 수 있습니다.
 
 #### Case 3: 사용자가 online 이었다가 중간에 offline 이 되었을 때
 사용자가 로그아웃을 하거나 관리자 페이지를 나가게 되면 status 확인용 웹소켓의 연결이 끊어집니다.
-게스트는 사용자가 disconnect 되었다는 메시지를 받게 됩니다.
+게스트는 사용자가 offline 이라는 메시지를 받게 됩니다.
 ---
 status 확인용 websocket 에 연결하는 방법은 다음과 같습니다. 
 
 사용자 (관리자 페이지 쪽) 는 아래 uri 에 이전에 소개했던 것처럼 ```?token=sometoken``` 과 같이 쿼리 스트링을 추가해주어야 합니다.
 
 ```javascript
-const request_uri = `ws://3.34.7.189/ws/chat/${hostUuid}/status/`;
+const request_uri = `ws://3.34.7.189/ws/status/${hostUuid}/`;
 chatSocket = new WebSocket(request_uri);
 chatSocket.onopen = () => {
     console.log('connected');
