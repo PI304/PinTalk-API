@@ -61,6 +61,7 @@ class ActiveStatusConsumer(BaseJsonConsumer):
             print("Failed to leave group")
 
     # Receive message from WebSocket
+    # content: 보낸 사람이 쓴 websocket 메시지
     async def receive_json(self, content, **kwargs):
         if content["type"] != "notice":
             # protocol error
@@ -68,24 +69,17 @@ class ActiveStatusConsumer(BaseJsonConsumer):
 
         await self.serialize_content(content)
         await self.channel_layer.group_send(self.room_group_name, content)
+        print("received", self.user_type)
 
-        # host 가 접속해있는 상황에서 guest 가 접속
-        if (
-            self.user_type == UserType.GUEST
-            and not content["is_host"]
-            and content["message"] == "online"
-        ):
-            host_online_msg = {
-                "type": "notice",
-                "is_host": True,
-                "message": "online",
-                "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-            }
-            await self.channel_layer.group_send(self.room_group_name, host_online_msg)
-
+    # Receive message from room group
     async def notice(self, event):
         # Send message to WebSocket
-        await self.send_json(event)
+        # host 가 접속해있는 상황에서 guest 가 접속
+        print("notice event", self.user_type)
+        if self.user_type == UserType.GUEST and event["is_host"]:
+            await self.send_json(event)
+        elif self.user_type == UserType.USER and not event["is_host"]:
+            await self.send_json(event)
 
     async def serialize_content(self, content) -> None:
         serializer = ChatMessageInMemorySerializer(data=content)
