@@ -4,6 +4,9 @@ COPY ./ /home/pintalk/
 
 WORKDIR /home/pintalk/
 
+RUN mkdir config/logs
+RUN touch config/logs/pintalk.log
+
 RUN apt-get update
 
 RUN pip install --no-cache-dir -r requirements.txt
