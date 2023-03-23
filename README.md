@@ -214,7 +214,7 @@ status 확인용 websocket 에 연결하는 방법은 다음과 같습니다.
 사용자 (관리자 페이지 쪽) 는 아래 uri 에 이전에 소개했던 것처럼 ```?token=sometoken``` 과 같이 쿼리 스트링을 추가해주어야 합니다.
 
 ```javascript
-const request_uri = `ws://3.34.7.189/ws/chat/${hostUuid}/status/`;
+const request_uri = `ws://3.34.7.189/ws/status/${hostUuid}/`;
 chatSocket = new WebSocket(request_uri);
 chatSocket.onopen = () => {
     console.log('connected');
