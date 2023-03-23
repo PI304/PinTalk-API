@@ -295,12 +295,12 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "INFO",
+            "level": "DEBUG",
             "filters": ["require_debug_true"],
             "class": "logging.StreamHandler",
         },
         "django.server": {
-            "level": "INFO",
+            "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "django.server",
         },
@@ -322,11 +322,11 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console", "mail_admins", "file"],
-            "level": "INFO",
+            "level": "DEBUG",
         },
         "django.server": {
             "handlers": ["django.server"],
-            "level": "INFO",
+            "level": "DEBUG",
             "propagate": False,
         },
         "pintalk": {"handlers": ["console"], "level": "DEBUG"},
