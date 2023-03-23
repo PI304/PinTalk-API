@@ -1,5 +1,6 @@
 import django
 from channels.exceptions import DenyConnection
+import logging
 
 django.setup()
 
@@ -17,6 +18,8 @@ from rest_framework_simplejwt.tokens import UntypedToken
 from jwt import decode as jwt_decode
 
 from apps.user.models import User
+
+logger = logging.getLogger("pintalk")
 
 
 @database_sync_to_async
@@ -41,6 +44,7 @@ class JwtAuthMiddleware(BaseMiddleware):
         qs: dict = parse_qs(scope["query_string"].decode("utf8"))
 
         if "token" in qs:
+            logger.info("user with token attempting to connect to websocket server")
             # Get token
             token = qs["token"][0]
             try:
@@ -49,6 +53,7 @@ class JwtAuthMiddleware(BaseMiddleware):
             except (InvalidToken, TokenError) as e:
                 # Token is invalid
                 print(e)
+                logger.info("token invalid or expired")
                 raise DenyConnection()
 
             else:
@@ -57,9 +62,11 @@ class JwtAuthMiddleware(BaseMiddleware):
                     token, settings.SIMPLE_JWT["SIGNING_KEY"], algorithms=["HS256"]
                 )
                 scope["user"] = await get_user(validated_token=decoded_data)
+                logger.info("registered user accepted")
 
         else:
             scope["user"] = AnonymousUser()
+            logger.info("anonymous user accepted")
 
         return await super().__call__(scope, receive, send)
 

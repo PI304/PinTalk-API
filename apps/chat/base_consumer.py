@@ -1,3 +1,5 @@
+import logging
+
 from enum import Enum
 
 from channels.db import database_sync_to_async
@@ -8,6 +10,8 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from apps.user.models import User
+
+logger = logging.getLogger("pintalk")
 
 
 class UserType(Enum):
@@ -27,6 +31,7 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
         if isinstance(self.user, AnonymousUser):
             # Check Origin
             host = await self.get_host_by_origin_header()
+            logger.info("anonymous user's origin verified")
             self.user_type = UserType.GUEST
             self.host = host
         else:

@@ -1,3 +1,4 @@
+import logging
 import datetime
 import os
 from dotenv import load_dotenv
@@ -15,6 +16,8 @@ from apps.chat.services import ChatroomService
 
 load_dotenv()
 
+logger = logging.getLogger("pintalk")
+
 
 class ChatConsumer(BaseJsonConsumer):
     def __init__(self, *args, **kwargs):
@@ -28,6 +31,8 @@ class ChatConsumer(BaseJsonConsumer):
             self.chatroom = chatroom
         except Http404:
             await self.close(code=4004)
+
+        logger.info("chatroom instance valid")
 
         if chatroom.is_closed:
             # chatroom 이 종료된 상태일 때
@@ -47,8 +52,10 @@ class ChatConsumer(BaseJsonConsumer):
 
             if self.user_type == UserType.GUEST:
                 print(f"Anonymous guest <{self.user}> joined the chat room")
+                logger.info(f"Anonymous guest <{self.user}> joined the chat room")
             else:
                 print(f"Registered user <{self.user.email}> joined the chat room")
+                logger.info(f"Anonymous guest <{self.user}> joined the chat room")
 
             # latest messages, max 50
             past_messages = ChatroomService.get_past_messages(
