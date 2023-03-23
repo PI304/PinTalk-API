@@ -329,6 +329,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "pintalk": {"handlers": ["console"], "level": "INFO"},
+        "pintalk": {"handlers": ["console"], "level": "DEBUG"},
     },
 }
