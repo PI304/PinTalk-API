@@ -46,7 +46,7 @@ class JwtAuthMiddleware(BaseMiddleware):
         if "token" in qs:
             logger.info("user with token attempting to connect to websocket server")
             # Get token
-            token = qs["token"][0]
+            token = qs["token"][0].replace("/", ".")
             try:
                 # This will automatically validate the token and raise an error if token is invalid
                 UntypedToken(token)

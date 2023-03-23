@@ -37,7 +37,7 @@ services:
     env_file:
       - .env
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.debug
+      DJANGO_SETTINGS_MODULE: config.settings.deploy
 
   server:
     build: infra/nginx
