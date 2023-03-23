@@ -109,7 +109,7 @@ ROOT_URLCONF = "config.urls"
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "config.exceptions.custom_exception_handler",
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -300,7 +300,7 @@ LOGGING = {
             "class": "logging.StreamHandler",
         },
         "django.server": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "django.server",
         },
@@ -322,11 +322,11 @@ LOGGING = {
     "loggers": {
         "django": {
             "handlers": ["console", "mail_admins", "file"],
-            "level": "DEBUG",
+            "level": "INFO",
         },
         "django.server": {
             "handlers": ["django.server"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
         },
         "pintalk": {"handlers": ["console"], "level": "DEBUG"},
