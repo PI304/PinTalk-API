@@ -213,6 +213,9 @@ status 확인용 websocket 에 연결하는 방법은 다음과 같습니다.
 
 사용자 (관리자 페이지 쪽) 는 아래 uri 에 이전에 소개했던 것처럼 ```?token=sometoken``` 과 같이 쿼리 스트링을 추가해주어야 합니다.
 
+> ⚠️ jwt token 은 delimiter 로 온점(.) 을 사용합니다. 하지만, query string 에 온점을 포함시키면 separator 로 인식하는 경우가 있으므로 
+> manual 하게 온점을 슬래쉬(/) 로 바꾸어 전달하도록 합니다.
+
 ```javascript
 const request_uri = `ws://3.34.7.189/ws/status/${hostUuid}/`;
 chatSocket = new WebSocket(request_uri);
