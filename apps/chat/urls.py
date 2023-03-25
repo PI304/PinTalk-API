@@ -4,8 +4,6 @@ from .views import (
     ChatroomDetailView,
     ChatroomExportView,
     ChatroomClientCreateView,
-    # ChatroomClientRetrieveView,
-    ChatroomClientResumeView,
     ChatroomMessageView,
 )
 
@@ -20,13 +18,8 @@ urlpatterns = [
     path(
         "chatrooms/<int:pk>/",
         ChatroomDetailView.as_view(),
-        name="leave-chatroom",
+        name="chatroom-detail",
     ),
-    # path(
-    #     "chatrooms/<int:pk>/",
-    #     ChatroomResumeView.as_view(),
-    #     name="leave-chatroom",
-    # ),
     path(
         "chatrooms/<int:pk>/download",
         ChatroomExportView.as_view(),
