@@ -94,7 +94,9 @@ class ChatConsumer(BaseJsonConsumer):
             await self.save_message_db(saved_message)
 
         elif content["type"] == "notice":
-            pass
+            logger.info("chatroom closed")
+            await self.channel_layer.group_send(self.room_group_name, content)
+            await self.close_chatroom()
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -104,6 +106,8 @@ class ChatConsumer(BaseJsonConsumer):
     async def notice(self, event):
         # Send message to WebSocket
         await self.send_json(event)
+        await self.close(1000)
+        logger.info("websocket closed due to chatroom closure")
 
     async def request(self, event):
         await self.send_json(event)
@@ -131,8 +135,19 @@ class ChatConsumer(BaseJsonConsumer):
     def reopen_chatroom(self) -> None:
 
         self.chatroom.is_closed = False
+        self.chatroom.closed_at = None
         self.chatroom.updated_at = datetime.datetime.now()
-        self.chatroom.save(update_fields=["is_closed", "updated_at"])
+        self.chatroom.save(update_fields=["is_closed", "closed_at", "updated_at"])
+
+    @database_sync_to_async
+    def close_chatroom(self) -> None:
+        self.chatroom.is_closed = True
+        self.chatroom.closed_at = datetime.datetime.now()
+        self.chatroom.updated_at = datetime.datetime.now()
+        self.chatroom.save(update_fields=["is_closed", "closed_at", "updated_at"])
+
+        self.save_latest_message()
+        ChatroomService.delete_chatroom_messages_mem(self.room_name)
 
     @database_sync_to_async
     def get_chatroom_instance(self) -> Chatroom:
