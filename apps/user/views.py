@@ -57,6 +57,13 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
+                "serviceName": openapi.Schema(
+                    type=openapi.TYPE_STRING, description="서비스 이름"
+                ),
+                "serviceExpl": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="서비스 설명, 최대 200자",
+                ),
                 "profileName": openapi.Schema(
                     type=openapi.TYPE_STRING, description="채팅 프로필 이름"
                 ),

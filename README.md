@@ -206,9 +206,12 @@ chatSocket.onmessage = function(e) {
 중간에 사용자가 접속하여 본인의 status 를 알리는 메시지를 보내게 되면 사용자가 online 상태가 되었음을 알 수 있습니다.
 
 #### Case 3: 사용자가 online 이었다가 중간에 offline 이 되었을 때
+
 사용자가 로그아웃을 하거나 관리자 페이지를 나가게 되면 status 확인용 웹소켓의 연결이 끊어집니다.
 게스트는 사용자가 offline 이라는 메시지를 받게 됩니다.
+
 ---
+
 status 확인용 websocket 에 연결하는 방법은 다음과 같습니다. 
 
 사용자 (관리자 페이지 쪽) 는 아래 uri 에 이전에 소개했던 것처럼 ```?token=sometoken``` 과 같이 쿼리 스트링을 추가해주어야 합니다.
