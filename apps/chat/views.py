@@ -116,44 +116,6 @@ class ChatroomClientCreateView(generics.GenericAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# @method_decorator(
-#     name="get",
-#     decorator=swagger_auto_schema(
-#         tags=["client"],
-#         operation_summary="Reenter (get) chatroom (client side)",
-#         operation_description="Reenter an existing chatroom",
-#         manual_parameters=[access_key_param, secret_key_param, guest_name_param],
-#         responses={
-#             200: openapi.Response("Success", ChatroomClientSerializer),
-#             401: "User not registered",
-#             404: "No previous chatroom record",
-#         },
-#     ),
-# )
-# class ChatroomClientRetrieveView(generics.RetrieveAPIView):
-#     serializer_class = ChatroomClientSerializer
-#     queryset = Chatroom.objects.all()
-#     filter_backends = [DjangoFilterBackend]
-#     filterset_fields = ["guest"]
-#
-#     def get_queryset(self):
-#         access_key = self.request.headers["X-PinTalk-Access-Key"]
-#         secret_key = self.request.headers["X-PinTalk-Secret-Key"]
-#         try:
-#             host_user = get_object_or_404(
-#                 User,
-#                 access_key=access_key,
-#                 secret_key=secret_key,
-#             )
-#         except Http404:
-#             raise NotAuthenticated("User not registered")
-#         return self.queryset.filter(host_id=host_user.id)
-#
-#     def get_object(self):
-#         queryset = self.get_queryset()
-#         return queryset.filter(guest=self.kwargs.get("guest")).first()
-
-
 @method_decorator(
     name="patch",
     decorator=swagger_auto_schema(
@@ -194,22 +156,25 @@ class ChatroomClientResumeView(generics.UpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ChatroomDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
-    serializer_class = ChatroomSerializer
+@method_decorator(
+    name="get",
+    decorator=swagger_auto_schema(
+        operation_summary="Retrieve chatroom data",
+        responses={200: openapi.Response("ok", ChatroomClientSerializer)},
+    ),
+)
+class ChatroomDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ChatroomClientSerializer
     queryset = Chatroom.objects.all()
     permission_classes = [HostOnly]
-    allowed_methods = ["PATCH", "DELETE"]
+    allowed_methods = ["GET", "PATCH", "DELETE"]
 
     @swagger_auto_schema(
-        operation_summary="Update chatroom info",
-        operation_description="채팅방 기본 정보 수정",
+        operation_summary="Fix or unfix chatroom",
+        operation_description="채팅방 상단 고정 설정 및 해제",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                "is_closed": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    description="대화 종료 여부. 종료한지 일주일이 지난 대화내역은 db 에서 자동으로 삭제되며, 일주일 안에 재개할 수 있습니다",
-                ),
                 "is_fixed": openapi.Schema(
                     type=openapi.TYPE_BOOLEAN,
                     description="상단 고정 여부, 5개까지 가능",
@@ -220,17 +185,13 @@ class ChatroomDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
         responses={200: openapi.Response("updated", ChatroomSerializer)},
     )
     def patch(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        if len(request.data) != 1:
+            raise InvalidInputException("no fields other than 'is_fixed' allowed")
+
         instance = self.get_object()
-        is_closed = request.data.get("is_closed")
         is_fixed = request.data.get("is_fixed")
 
-        if is_closed:
-            data = {"is_fixed": False, "fixed_at": None, "is_closed": True}
-            serializer = self.get_serializer(instance, data=data, partial=True)
-            if serializer.is_valid(raise_exception=True):
-                timestamp = datetime.now()
-                serializer.save(updated_at=timestamp, closed_at=timestamp)
-        elif is_fixed is not None and is_fixed is True:
+        if is_fixed is True:
             # check if fixed chatroom exceeds 5
             fixed_chatrooms = Chatroom.objects.filter(
                 host_id=request.user.id, is_fixed=True
@@ -238,25 +199,23 @@ class ChatroomDetailView(generics.UpdateAPIView, generics.DestroyAPIView):
             if fixed_chatrooms == 5:
                 raise UnprocessableException("fixed chatroom cannot exceed 5")
 
-            data = {"is_fixed": True}
-            serializer = self.get_serializer(instance, data=data, partial=True)
-            if serializer.is_valid(raise_exception=True):
-                timestamp = datetime.now()
-                serializer.save(updated_at=timestamp, fixed_at=timestamp)
-        else:
-            raise InvalidInputException()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            timestamp = datetime.now()
+            serializer.save(updated_at=timestamp, fixed_at=timestamp)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(
         operation_summary="Immediately deletes a chatroom",
-        operation_description="즉시 대화방을 나갑니다. 모든 내역은 삭제됩니다",
+        operation_description="즉시 대화방을 내역을 삭제합니다. 채팅방을 삭제하기 위해선 우선 채팅방을 종료해야 합니다.",
         responses={204: "deleted"},
     )
     def delete(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        instance = self.get_object()
-        # 채팅 종료 시, redis 기록을 지움 (종료된 채팅방에 대한 메시지 기록은 db 에서 조회함)
-        ChatroomService.delete_chatroom_mem(instance.name)
+        instance: Chatroom = self.get_object()
+        if not instance.is_closed:
+            raise UnprocessableException("chatroom should be closed before deletion")
+        instance.delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

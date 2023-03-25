@@ -118,13 +118,13 @@ class ChatroomService(object):
         return serializer.data
 
     @staticmethod
-    def delete_chatroom_mem(room_name: str, redis_conn=None) -> None:
+    def delete_chatroom_messages_mem(room_name: str, redis_conn=None) -> None:
         if redis_conn is None:
             rd = redis.StrictRedis(host=os.environ.get("REDIS_HOST"), port=6379, db=0)
         else:
             rd = redis_conn
 
-        rd.delete("chat_" + room_name)
+        rd.zremrangebyrank("chat_" + room_name, 0, -1)
 
     @staticmethod
     def save_message(
