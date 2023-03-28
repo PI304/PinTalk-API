@@ -1,9 +1,13 @@
 import time
+import urllib
 from datetime import datetime
+from io import StringIO
+from tempfile import NamedTemporaryFile
 from typing import Any
+from urllib.parse import quote
 
 from django.db.models import QuerySet
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -188,8 +192,27 @@ class ChatroomExportView(APIView):
         operation_summary="Download chat messages from a chatroom as txt format",
         operation_description="txt 파일 포맷으로 특정 채팅방의 채팅 내역을 다운로드 받습니다",
     )
-    def get(self, pk: int, format=None) -> HttpResponse:
-        pass
+    def get(self, request: Request, pk: int, format=None) -> HttpResponse:
+        queryset = Chatroom.objects.select_related("host").filter(id=pk)
+        instance = queryset.first()
+
+        service = ChatroomService(request, instance)
+        content: str = service.get_file_text()
+
+        filename = f'{instance.guest}_{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}'
+
+        encoded_filename = urllib.parse.quote(filename.encode("utf-8"))
+
+        response = HttpResponse(
+            content=content,
+            content_type="text/plain",
+            status=200,
+        )
+        response.headers[
+            "Content-Disposition"
+        ] = "attachment; filename*=utf-8''{}.txt".format(encoded_filename)
+
+        return response
 
 
 @method_decorator(
