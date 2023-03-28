@@ -21,7 +21,7 @@ urlpatterns = [
         name="chatroom-detail",
     ),
     path(
-        "chatrooms/<int:pk>/download",
+        "chatrooms/<int:pk>/download/",
         ChatroomExportView.as_view(),
         name="export-chatroom-messages",
     ),

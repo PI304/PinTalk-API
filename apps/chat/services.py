@@ -2,14 +2,12 @@ import json
 import os
 import uuid
 from datetime import datetime
+from io import StringIO
 from typing import Union, List
 from dotenv import load_dotenv
 
 import redis
 import shortuuid
-from django.http import Http404
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework.request import Request
 
 from apps.chat.models import Chatroom, ChatMessage
@@ -136,6 +134,43 @@ class ChatroomService(object):
             serializer.save(chatroom_id=chatroom_id)
 
         return serializer.data
+
+    def _get_all_messages_in_mem(self):
+        group_name = f"chat_{self.chatroom.name}"
+        redis_conn = redis.StrictRedis(
+            host=os.environ.get("REDIS_HOST"), port=6379, db=0
+        )
+
+        messages = redis_conn.zrange(group_name, 0, -1, withscores=True)
+
+        decoded_messages: List[dict] = []
+
+        for m in messages:
+            json_dict = m[0].decode("utf-8")
+            decoded_messages.append(dict(json.loads(json_dict)))
+        return decoded_messages
+
+    def get_file_text(self) -> str:
+        msg_data = ""
+        if self.chatroom.is_closed:
+            messages = ChatMessage.objects.filter(chatroom_id=self.chatroom.id).values()
+        else:
+            messages = self._get_all_messages_in_mem()
+
+        for m in messages:
+            if self.chatroom.is_closed:
+                row_data = f"[{m.get('datetime')}"
+            else:
+                row_data = f"[{m.get('datetime').replace('T', ' ')}"
+
+            if m.get("is_host"):
+                row_data += f" {self.chatroom.host.profile_name}] {m.get('message')}\n"
+            else:
+                row_data += f" {self.chatroom.guest}] {m.get('message')}\n"
+
+            msg_data += row_data
+
+        return msg_data
 
 
 class ChatroomStatusService:

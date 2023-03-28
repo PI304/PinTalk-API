@@ -1,9 +1,13 @@
 import time
+import urllib
 from datetime import datetime
+from io import StringIO
+from tempfile import NamedTemporaryFile
 from typing import Any
+from urllib.parse import quote
 
 from django.db.models import QuerySet
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -163,48 +167,11 @@ class ChatroomClientResumeView(generics.UpdateAPIView):
         responses={200: openapi.Response("ok", ChatroomClientSerializer)},
     ),
 )
-class ChatroomDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ChatroomDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = ChatroomClientSerializer
     queryset = Chatroom.objects.all()
     permission_classes = [HostOnly]
-    allowed_methods = ["GET", "PATCH", "DELETE"]
-
-    @swagger_auto_schema(
-        operation_summary="Fix or unfix chatroom",
-        operation_description="채팅방 상단 고정 설정 및 해제",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "is_fixed": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    description="상단 고정 여부, 5개까지 가능",
-                    default=False,
-                ),
-            },
-        ),
-        responses={200: openapi.Response("updated", ChatroomSerializer)},
-    )
-    def patch(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        if len(request.data) != 1:
-            raise InvalidInputException("no fields other than 'is_fixed' allowed")
-
-        instance = self.get_object()
-        is_fixed = request.data.get("is_fixed")
-
-        if is_fixed is True:
-            # check if fixed chatroom exceeds 5
-            fixed_chatrooms = Chatroom.objects.filter(
-                host_id=request.user.id, is_fixed=True
-            ).count()
-            if fixed_chatrooms == 5:
-                raise UnprocessableException("fixed chatroom cannot exceed 5")
-
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid(raise_exception=True):
-            timestamp = datetime.now()
-            serializer.save(updated_at=timestamp, fixed_at=timestamp)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    allowed_methods = ["GET", "DELETE"]
 
     @swagger_auto_schema(
         operation_summary="Immediately deletes a chatroom",
@@ -225,8 +192,27 @@ class ChatroomExportView(APIView):
         operation_summary="Download chat messages from a chatroom as txt format",
         operation_description="txt 파일 포맷으로 특정 채팅방의 채팅 내역을 다운로드 받습니다",
     )
-    def get(self, pk: int, format=None) -> HttpResponse:
-        pass
+    def get(self, request: Request, pk: int, format=None) -> HttpResponse:
+        queryset = Chatroom.objects.select_related("host").filter(id=pk)
+        instance = queryset.first()
+
+        service = ChatroomService(request, instance)
+        content: str = service.get_file_text()
+
+        filename = f'{instance.guest}_{datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}'
+
+        encoded_filename = urllib.parse.quote(filename.encode("utf-8"))
+
+        response = HttpResponse(
+            content=content,
+            content_type="text/plain",
+            status=200,
+        )
+        response.headers[
+            "Content-Disposition"
+        ] = "attachment; filename*=utf-8''{}.txt".format(encoded_filename)
+
+        return response
 
 
 @method_decorator(
