@@ -9,6 +9,7 @@
 4. [Error Codes](#4-error-codes)
 5. [Checking New Messages](#5-checking-new-messages)
 6. [Email Notifications](#6-email-notifications)
+7. [Top-Fixing Chatrooms](#7-top-fixing-chatrooms)
 
 
 
@@ -280,3 +281,6 @@ online_message = {
 
 *이 피처는 추후 추가 예정입니다.*
 
+## 7. Top-Fixing Chatrooms
+유저는 총 5개까지의 채팅방을 상단 고정할 수 있습니다. 상단 고정을 하는 기능은 백엔드 서버를 통해서 
+수행하는 것이 아닌, **프론트엔드에서 로컬 스토리지나 쿠키를 이용해서 구현**하도록 합니다.

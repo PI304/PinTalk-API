@@ -163,48 +163,11 @@ class ChatroomClientResumeView(generics.UpdateAPIView):
         responses={200: openapi.Response("ok", ChatroomClientSerializer)},
     ),
 )
-class ChatroomDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ChatroomDetailView(generics.RetrieveDestroyAPIView):
     serializer_class = ChatroomClientSerializer
     queryset = Chatroom.objects.all()
     permission_classes = [HostOnly]
-    allowed_methods = ["GET", "PATCH", "DELETE"]
-
-    @swagger_auto_schema(
-        operation_summary="Fix or unfix chatroom",
-        operation_description="채팅방 상단 고정 설정 및 해제",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "is_fixed": openapi.Schema(
-                    type=openapi.TYPE_BOOLEAN,
-                    description="상단 고정 여부, 5개까지 가능",
-                    default=False,
-                ),
-            },
-        ),
-        responses={200: openapi.Response("updated", ChatroomSerializer)},
-    )
-    def patch(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        if len(request.data) != 1:
-            raise InvalidInputException("no fields other than 'is_fixed' allowed")
-
-        instance = self.get_object()
-        is_fixed = request.data.get("is_fixed")
-
-        if is_fixed is True:
-            # check if fixed chatroom exceeds 5
-            fixed_chatrooms = Chatroom.objects.filter(
-                host_id=request.user.id, is_fixed=True
-            ).count()
-            if fixed_chatrooms == 5:
-                raise UnprocessableException("fixed chatroom cannot exceed 5")
-
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid(raise_exception=True):
-            timestamp = datetime.now()
-            serializer.save(updated_at=timestamp, fixed_at=timestamp)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    allowed_methods = ["GET", "DELETE"]
 
     @swagger_auto_schema(
         operation_summary="Immediately deletes a chatroom",
