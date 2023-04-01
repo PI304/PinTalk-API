@@ -117,8 +117,8 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": [
-        "config.renderer.CustomRenderer",
         "djangorestframework_camel_case.render.CamelCaseJSONRenderer",
+        "config.renderer.CustomRenderer",
     ],
     "DEFAULT_PARSER_CLASSES": [
         "djangorestframework_camel_case.parser.CamelCaseJSONParser",
