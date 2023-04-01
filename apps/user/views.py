@@ -6,7 +6,7 @@ from django.utils.decorators import method_decorator
 from djangorestframework_camel_case.parser import CamelCaseJSONParser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
@@ -17,7 +17,10 @@ from apps.user.serializers import (
     ClientSerializer,
     UserConfigurationSerializer,
 )
-from config.permissions import AuthenticatedClientOnly, RequestUserOnly
+from config.permissions import (
+    RequestUserOnly,
+    AuthorizedOriginOnly,
+)
 
 
 @method_decorator(
@@ -118,7 +121,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     ),
 )
 class ClientProfileView(generics.RetrieveAPIView):
-    permission_classes = [AuthenticatedClientOnly]
+    permission_classes = [AuthorizedOriginOnly]
     serializer_class = ClientSerializer
     queryset = User.objects.all()
 

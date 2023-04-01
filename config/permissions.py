@@ -1,16 +1,14 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class AuthenticatedClientOnly(BasePermission):
+class AuthorizedOriginOnly(BasePermission):
     message = "request domain not allowed"
 
     def has_object_permission(self, request, view, obj) -> bool:
-        host = request.headers.get("Host", None)
-        print(host)
-        if host != obj.service_domain:
-            return False
-
-        return True
+        origin = request.headers.get("Origin")
+        if obj.service_domain == origin.split("//")[1]:
+            return True
+        return False
 
 
 class HostOnly(BasePermission):
@@ -38,7 +36,6 @@ class ClientWithHeadersOnly(BasePermission):
             not request.headers["X-Pintalk-Access-Key"]
             or not request.headers["X-Pintalk-Secret-Key"]
         ):
-            print("permission denied")
             return False
         else:
             return True
