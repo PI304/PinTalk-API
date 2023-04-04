@@ -44,7 +44,13 @@ services:
     container_name: pintalk-nginx
     ports:
       - "80:80"
+      - "443:443"
     restart: always
+    volumes:
+      - ./certbot/conf:/etc/nginx/ssl
+      - ./certbot/data:/var/www/letsencrypt
+    depends_on:
+      - api
 volumes:
   pintalk-redis:
   pintalk-mysql:
