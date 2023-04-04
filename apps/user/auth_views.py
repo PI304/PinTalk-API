@@ -413,7 +413,10 @@ class TokenRefreshView(APIView):
                 res.set_cookie(
                     settings.SIMPLE_JWT["AUTH_COOKIE"],
                     new_refresh,
-                    max_age=60 * 60 * 24 * 14,
+                    max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
+                    httponly=True,
+                    samesite="None",
+                    secure=True,
                 )  # 2 weeks
                 return res
 
