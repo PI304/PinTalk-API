@@ -92,6 +92,10 @@ def custom_exception_handler(exc, context):
             customized_response = {"code": response.status_code, "detail": exc.detail}
         elif isinstance(exc, DuplicateInstance):
             customized_response = {"code": response.status_code, "detail": exc.detail}
+        elif isinstance(exc, UnprocessableException):
+            customized_response = {"code": response.status_code, "detail": exc.detail}
+        elif isinstance(exc, InvalidInputException):
+            customized_response = {"code": response.status_code, "detail": exc.detail}
         else:
             customized_response = {
                 "code": response.status_code,
