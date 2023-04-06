@@ -123,6 +123,8 @@ class BasicSignInView(APIView):
             max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
             httponly=True,
             secure=True,
+            domain="pintalk.app",
+            samesite="Lax",
         )  # 7 days
         return res
 
@@ -179,6 +181,8 @@ class CheckDuplicateUsernameView(APIView):
             max_age=3600,
             httponly=True,
             secure=True,
+            domain="pintalk.app",
+            samesite="Lax",
         )
 
         return res
@@ -294,6 +298,8 @@ class EmailVerification(APIView):
             signed_cookie_obj,
             max_age=300,
             httponly=True,
+            domain="pintalk.app",
+            samesite="Lax",
             secure=True,
         )
 
@@ -352,6 +358,8 @@ class EmailConfirmation(APIView):
                 max_age=600,
                 secure=True,
                 httponly=True,
+                domain="pintalk.app",
+                samesite="Lax",
             )
             return res
         else:
@@ -413,6 +421,8 @@ class TokenRefreshView(APIView):
                     max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
                     httponly=True,
                     secure=True,
+                    domain="pintalk.app",
+                    samesite="Lax",
                 )  # 2 weeks
                 return res
 
