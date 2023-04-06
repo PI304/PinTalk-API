@@ -4,6 +4,5 @@ class AddHeaders:
 
     def __call__(self, request):
         response = self.get_response(request)
-        response["Host"] = "localhost"
-        response["Link"] = '<https://api-doc>; rel="profile"'
+        response["Link"] = 'https://api.pintalk.app/api/swagger; rel="profile"'
         return response

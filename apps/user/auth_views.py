@@ -180,6 +180,7 @@ class CheckDuplicateUsernameView(APIView):
             max_age=3600,
             samesite="None",
             httponly=True,
+            secure=True,
         )
 
         return res
