@@ -122,7 +122,6 @@ class BasicSignInView(APIView):
             refresh_token,
             max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
             httponly=True,
-            samesite="None",
             secure=True,
         )  # 7 days
         return res
@@ -178,7 +177,6 @@ class CheckDuplicateUsernameView(APIView):
             "email_duplication_check",
             "complete",
             max_age=3600,
-            samesite="None",
             httponly=True,
             secure=True,
         )
@@ -297,7 +295,6 @@ class EmailVerification(APIView):
             max_age=300,
             httponly=True,
             secure=True,
-            samesite="None",
         )
 
         # send email
@@ -355,7 +352,6 @@ class EmailConfirmation(APIView):
                 max_age=600,
                 secure=True,
                 httponly=True,
-                samesite="None",
             )
             return res
         else:
@@ -416,7 +412,6 @@ class TokenRefreshView(APIView):
                     new_refresh,
                     max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
                     httponly=True,
-                    samesite="None",
                     secure=True,
                 )  # 2 weeks
                 return res
