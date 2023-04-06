@@ -134,9 +134,9 @@ REST_FRAMEWORK = {
 }
 
 # CORS
-# CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "127.0.0.1:8000"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "https://pintalk.app"]
+CORS_EXPOSE_HEADERS = ["Set-Cookie"]
 
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
@@ -144,16 +144,6 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     "X-PinTalk-Access-Key",
     "X-PinTalk-Secret-Key",
 ]
-
-# CSRF_TRUSTED_ORIGINS = [
-#     "http://localhost:3000",
-# ]
-
-CSRF_USE_SESSIONS = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = None
-SESSION_COOKIE_SAMESITE = None
 
 TEMPLATES = [
     {
