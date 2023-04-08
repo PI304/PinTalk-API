@@ -77,7 +77,8 @@ class BasicSignUpView(APIView):
 
         # Create UserConfig
         c_serializer = UserConfigurationSerializer(data={})
-        c_serializer.save(user_id=serializer.data.get("id"))
+        if c_serializer.is_valid(raise_exception=True):
+            c_serializer.save(user_id=serializer.data.get("id"))
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

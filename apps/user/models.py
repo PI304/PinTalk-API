@@ -122,7 +122,7 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
 class UserConfiguration(TimeStampMixin):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
-    use_online_status = models.BooleanField(null=False, default=True)
+    use_online_status = models.BooleanField(default=True)
 
     class Meta:
         db_table = "user_config"
