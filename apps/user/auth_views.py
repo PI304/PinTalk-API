@@ -352,7 +352,11 @@ class EmailConfirmation(APIView):
         if unsigned_code_cookie == code_input:
             res = Response(status=status.HTTP_204_NO_CONTENT)
             if "email_confirmation_code" in request.COOKIES:
-                res.delete_cookie("email_verification_code")
+                res.delete_cookie(
+                    "email_verification_code",
+                    domain="pintalk.app",
+                    samesite="Lax",
+                )
             res.set_cookie(
                 "email_confirmation",
                 "complete",
