@@ -108,8 +108,6 @@ class BasicSignInView(APIView):
         update_last_login(None, user)
         serializer = UserSerializer(user)
         access_token, refresh_token = UserService.generate_tokens(user)
-        print("access", access_token)
-        print("refresh", refresh_token)
 
         data = serializer.data
         data["access_token"] = access_token
@@ -395,28 +393,17 @@ class TokenRefreshView(APIView):
         },
     )
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT["AUTH_COOKIE"]) or None
-        access_token = request.META.get("HTTP_AUTHORIZATION") or None
-
-        # authenticate() verifies and decode the token
-        # if token is invalid, it raises an exception and returns 401
-        refresh_token_authenticator = RefreshTokenAuthentication()
         access_token_authenticator = JWTAuthentication()
 
         try:
             access_token_validation = access_token_authenticator.authenticate(request)
-            return Response(
-                "Access token not expired", status=status.HTTP_204_NO_CONTENT
-            )
-        except InvalidToken:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except InvalidToken or AuthenticationFailed:
             # access_token is invalid
             try:
-                user, validated_token = refresh_token_authenticator.authenticate(
-                    request
-                )
-                new_access, new_refresh = UserService.generate_tokens(user)
+                new_access, new_refresh = UserService.generate_tokens(request.user)
                 res = Response(
-                    dict(access_token=new_access, refresh_token=new_refresh),
+                    dict(access_token=new_access),
                     status=status.HTTP_201_CREATED,
                 )
                 res.set_cookie(
@@ -427,7 +414,7 @@ class TokenRefreshView(APIView):
                     secure=True,
                     domain="pintalk.app",
                     samesite="Lax",
-                )  # 2 weeks
+                )
                 return res
 
             except InvalidToken:
