@@ -102,6 +102,9 @@ class BasicSignInView(APIView):
         except Http404:
             raise AuthenticationFailed("No user by the provided email")
 
+        if user.is_deleted:
+            raise ConflictException("this user has been deactivated")
+
         if not check_password(password, user.password):
             raise AuthenticationFailed("Incorrect password")
 
@@ -125,6 +128,21 @@ class BasicSignInView(APIView):
             domain="pintalk.app",
             samesite="Lax",
         )  # 7 days
+        return res
+
+
+class BasicSignOutView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Logout",
+        responses={204: "logged out"},
+    )
+    def post(self, request, *args, **kwargs):
+        res = Response(status=status.HTTP_204_NO_CONTENT)
+        res.delete_cookie(
+            settings.SIMPLE_JWT["AUTH_COOKIE"],
+            domain="pintalk.app",
+            samesite="Lax",
+        )
         return res
 
 

@@ -4,6 +4,7 @@ from . import auth_views
 urlpatterns = [
     path("signup/", auth_views.BasicSignUpView.as_view(), name="basic-signup"),
     path("login/", auth_views.BasicSignInView.as_view(), name="basic-login"),
+    path("logout/", auth_views.BasicSignOutView.as_view(), name="basic-logout"),
     path("leave/", auth_views.SecessionView.as_view(), name="basic-leave"),
 ]
 urlpatterns += [

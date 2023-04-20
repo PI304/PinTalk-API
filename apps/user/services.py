@@ -20,7 +20,7 @@ class UserService(object):
     def deactivate_user(self):
         self.user.is_deleted = True
         self.user.updated_at = datetime.datetime.now()
-        self.user.save(updated_field=["is_deleted", "updated_at"])
+        self.user.save(update_fields=["is_deleted", "updated_at"])
         return self.user
 
     @staticmethod
