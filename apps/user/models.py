@@ -13,7 +13,7 @@ class TimeStampMixin(models.Model):
     """
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         abstract = True
@@ -82,6 +82,10 @@ class UserManager(BaseUserManager):
         return self.create_user(email=email, password=password, **extra_fields)
 
 
+def modify_profile_image_filename(instance, filename):
+    return f"user_profiles/{str(uuid.uuid4())}"
+
+
 class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)
     email = models.EmailField(max_length=64, unique=True, null=False)
@@ -94,7 +98,7 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     profile_name = models.CharField(max_length=50, null=False, blank=True, default="")
     description = models.CharField(max_length=200, null=True, blank=True, default="")
     profile_image = models.ImageField(
-        blank=False, null=True, upload_to="user_profiles/"
+        blank=False, null=True, upload_to=modify_profile_image_filename
     )
 
     is_staff = models.BooleanField(
