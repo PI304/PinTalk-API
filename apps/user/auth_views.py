@@ -1,3 +1,5 @@
+import copy
+
 from django.contrib.auth.models import update_last_login
 from django.core.signing import Signer
 from django.http import JsonResponse, Http404
@@ -152,11 +154,15 @@ class SecessionView(APIView):
         responses={200: openapi.Response("user", UserSerializer)},
     )
     def post(self, request, *args, **kwargs):
-        service = UserService(request.user, request)
-        user = service.deactivate_user()
-        serializer = UserSerializer(user)
+        # service = UserService(request.user, request)
+        # user = service.deactivate_user()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # Hard delete user
+        serializer = UserSerializer(request.user)
+        user_data = copy.deepcopy(serializer.data)
+        request.user.delete()
+
+        return Response(user_data, status=status.HTTP_200_OK)
 
 
 class CheckDuplicateUsernameView(APIView):
