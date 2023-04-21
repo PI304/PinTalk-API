@@ -52,7 +52,6 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.all()
     allowed_methods = ["PATCH", "GET"]
-    parser_classes = [MultiPartParser, FormParser, CamelCaseJSONParser]
 
     @swagger_auto_schema(
         operation_summary="Update user profile",

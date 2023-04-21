@@ -42,10 +42,6 @@ class UserSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
-    def validate_profile_image(self, value):
-        print(value)
-        return "user_profiles/" + str(uuid.uuid4())
-
     def create(self, validated_data):
         validated_data["password"] = make_password(validated_data.get("password"))
         return super(UserSerializer, self).create(validated_data)
