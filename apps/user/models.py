@@ -13,7 +13,7 @@ class TimeStampMixin(models.Model):
     """
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         abstract = True
@@ -64,7 +64,7 @@ class UserManager(BaseUserManager):
         Create and save a SuperUser with the given email and password.
         """
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_deleted", False)
+        # extra_fields.setdefault("is_deleted", False)
 
         # TODO: more details on access key and secret key
         extra_fields.setdefault(
@@ -82,7 +82,11 @@ class UserManager(BaseUserManager):
         return self.create_user(email=email, password=password, **extra_fields)
 
 
-class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
+def modify_profile_image_filename(instance, filename):
+    return f"user_profiles/{str(uuid.uuid4())}"
+
+
+class User(AbstractBaseUser, TimeStampMixin, PermissionsMixin):
     id = models.BigAutoField(primary_key=True)
     email = models.EmailField(max_length=64, unique=True, null=False)
     uuid = models.CharField(max_length=22, null=False)
@@ -94,7 +98,7 @@ class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
     profile_name = models.CharField(max_length=50, null=False, blank=True, default="")
     description = models.CharField(max_length=200, null=True, blank=True, default="")
     profile_image = models.ImageField(
-        blank=False, null=True, upload_to="user_profiles/"
+        blank=False, null=True, upload_to=modify_profile_image_filename
     )
 
     is_staff = models.BooleanField(

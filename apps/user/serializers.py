@@ -26,7 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
             "service_name",
             "service_expl",
             "service_domain",
-            "is_deleted",
             "profile_image",
             "password",
             "created_at",
@@ -35,16 +34,11 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "uuid",
-            "is_deleted",
             "access_key",
             "secret_key",
             "created_at",
             "updated_at",
         ]
-
-    def validate_profile_image(self, value):
-        print(value)
-        return "user_profiles/" + str(uuid.uuid4())
 
     def create(self, validated_data):
         validated_data["password"] = make_password(validated_data.get("password"))
