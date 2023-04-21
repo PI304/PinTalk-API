@@ -3,6 +3,7 @@ from rest_framework.views import exception_handler
 from rest_framework import exceptions
 from django.http import Http404
 from rest_framework.exceptions import APIException
+from rest_framework_simplejwt.exceptions import InvalidToken
 
 
 class InstanceNotFound(APIException):
@@ -70,10 +71,17 @@ def custom_exception_handler(exc, context):
     # to get the standard error response.
     response = exception_handler(exc, context)
 
+    print(type(exc))
+
     # Update the structure of the response data.
     if response is not None:
         if isinstance(exc, Http404):
             customized_response = {"code": response.status_code, "detail": "Not Found"}
+        elif isinstance(exc, InvalidToken):
+            customized_response = {
+                "code": response.status_code,
+                "detail": "Token is invalid or expired",
+            }
         elif isinstance(exc, exceptions.NotFound):
             customized_response = {"code": response.status_code, "detail": exc.detail}
         elif isinstance(exc, exceptions.MethodNotAllowed):
