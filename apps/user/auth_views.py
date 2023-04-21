@@ -104,8 +104,8 @@ class BasicSignInView(APIView):
         except Http404:
             raise AuthenticationFailed("No user by the provided email")
 
-        if user.is_deleted:
-            raise ConflictException("this user has been deactivated")
+        # if user.is_deleted:
+        #     raise ConflictException("this user has been deactivated")
 
         if not check_password(password, user.password):
             raise AuthenticationFailed("Incorrect password")

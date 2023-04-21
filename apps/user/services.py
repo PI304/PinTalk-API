@@ -17,11 +17,11 @@ class UserService(object):
         self.user = user
         self.request = request
 
-    def deactivate_user(self):
-        self.user.is_deleted = True
-        self.user.updated_at = datetime.datetime.now()
-        self.user.save(update_fields=["is_deleted", "updated_at"])
-        return self.user
+    # def deactivate_user(self):
+    #     self.user.is_deleted = True
+    #     self.user.updated_at = datetime.datetime.now()
+    #     self.user.save(update_fields=["is_deleted", "updated_at"])
+    #     return self.user
 
     @staticmethod
     def generate_access_key():
