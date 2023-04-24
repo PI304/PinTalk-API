@@ -413,6 +413,7 @@ class TokenRefreshView(APIView):
         ],
         responses={
             201: openapi.Response("Pair of new tokens", TokenRefreshSerializer),
+            204: "Access token not expired",
             401: "Authentication Failed",
         },
     )
