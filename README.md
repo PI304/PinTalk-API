@@ -155,6 +155,8 @@ websocket 에 성공적으로 연결되기 위해선 credential 확인이 필요
     - websocket 연결을 요청하는 uri 에 쿼리 스트링으로 access token 을 추가합니다.
     - [2) 웹소켓 연결하기](#2-웹소켓-연결하기) 섹션의 예제 코드로 제시했던 uri 뒤에 ```token``` 이라는 이름으로 쿼리 스트링을 추가해야합니다.
     - ```const request_uri = `ws://3.34.7.189/ws/chat/${roomName}/?token=${user'stoken}`;```
+         > ⚠️ jwt token 은 delimiter 로 온점(.) 을 사용합니다. 하지만, query string 에 온점을 포함시키면 separator 로 인식하는 경우가 있으므로 
+         > manual 하게 온점을 슬래쉬(/) 로 바꾸어 전달하도록 합니다.
     - 이 토큰을 사용하여 authenticate 과정을 거친 후 웹소켓 연결을 승인합니다.
 
 ### 4) Chat Message Data
