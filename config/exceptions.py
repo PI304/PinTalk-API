@@ -1,4 +1,3 @@
-from django.core.exceptions import BadRequest
 from rest_framework.views import exception_handler
 from rest_framework import exceptions
 from django.http import Http404
@@ -103,6 +102,8 @@ def custom_exception_handler(exc, context):
         elif isinstance(exc, UnprocessableException):
             customized_response = {"code": response.status_code, "detail": exc.detail}
         elif isinstance(exc, InvalidInputException):
+            customized_response = {"code": response.status_code, "detail": exc.detail}
+        elif isinstance(exc, ConflictException):
             customized_response = {"code": response.status_code, "detail": exc.detail}
         else:
             customized_response = {

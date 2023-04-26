@@ -1,13 +1,10 @@
-import copy
-
 from django.contrib.auth.models import update_last_login
 from django.core.signing import Signer
-from django.http import JsonResponse, Http404
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -33,7 +30,7 @@ from .services import UserService
 
 
 class BasicSignUpView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Sign up",
@@ -86,7 +83,7 @@ class BasicSignUpView(APIView):
 
 
 class BasicSignInView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Sign In",
@@ -174,20 +171,63 @@ class SecessionView(APIView):
         # user_data = copy.deepcopy(serializer.data)
         # request.user.delete()
 
-        return Response(user, status=status.HTTP_200_OK)
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
 
 
 class RestoreView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Restore deleted user",
-        responses={204: "Restored user. Temporary password sent to user email"},
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["email"],
+            properties={
+                "email": openapi.Schema(
+                    type=openapi.FORMAT_EMAIL, description="복구하고자 하는 계정의 이메일"
+                )
+            },
+        ),
+        responses={
+            200: "Restored user. Temporary password sent to user email",
+            401: "Unauthorized email",
+            500: "Failed to send email. Try again later",
+        },
     )
     def post(self, request, *args, **kwargs):
-        pass
+        try:
+            user: User = get_object_or_404(User, email=request.data.get("email"))
+        except Http404:
+            raise AuthenticationFailed("Unauthorized email")
+
+        if not user.is_deleted:
+            raise UnprocessableException("this user is already activated")
+
+        service: UserService = UserService(user, request)
+        service.activate_user()
+
+        temp_password: str = UserService.generate_random_code(3, 8)
+        user.set_password(temp_password)
+        user.save(update_fields=["password"])
+
+        email = EmailMessage(
+            "[PinTalk] 비밀번호가 초기화 되었습니다.",
+            f"비밀번호가 아래의 임시 비밀번호로 변경되었습니다. 아래 비밀번호로 다시 로그인하신 뒤 꼭 비밀번호를 변경해주세요.\n임시 비밀번호: {temp_password}",
+            to=[user.email],  # 받는 이메일
+        )
+        success = email.send()
+
+        if success > 0:
+            return Response({"detail": "email sent"}, status=status.HTTP_200_OK)
+        elif success == 0:
+            return Response(
+                {"detail": "Failed to send email. Try again later."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class CheckDuplicateUsernameView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Check if there's duplicate email (username)",
@@ -269,7 +309,7 @@ class PasswordChangeView(APIView):
 
 
 class PasswordResetView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Reset password to random string sent to user email",
@@ -278,6 +318,7 @@ class PasswordResetView(APIView):
             properties={"email": openapi.Schema(type=openapi.FORMAT_EMAIL)},
         ),
         responses={
+            200: "email sent",
             404: "User with the provided email does not exist",
             500: "Failed to send email. Try again later.",
         },
@@ -302,7 +343,7 @@ class PasswordResetView(APIView):
         success = email.send()
 
         if success > 0:
-            return Response(status=status.HTTP_200_OK)
+            return Response({"detail": "email sent"}, status=status.HTTP_200_OK)
         elif success == 0:
             return Response(
                 {"detail": "Failed to send email. Try again later."},
@@ -311,7 +352,7 @@ class PasswordResetView(APIView):
 
 
 class EmailVerification(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Send verification code to user email when signing up",
@@ -367,7 +408,7 @@ class EmailVerification(APIView):
 
 
 class EmailConfirmation(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Confirm code sent to email for signing up",
@@ -419,7 +460,7 @@ class TokenRefreshView(APIView):
     """
 
     authentication_classes = [RefreshTokenAuthentication]
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.AllowAny]
     renderer_classes = [CustomRenderer]
 
     @swagger_auto_schema(
