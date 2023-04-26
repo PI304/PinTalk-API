@@ -6,6 +6,7 @@ urlpatterns = [
     path("login/", auth_views.BasicSignInView.as_view(), name="basic-login"),
     path("logout/", auth_views.BasicSignOutView.as_view(), name="basic-logout"),
     path("leave/", auth_views.SecessionView.as_view(), name="basic-leave"),
+    path("restore/", auth_views.RestoreView.as_view(), name="basic-restore"),
 ]
 urlpatterns += [
     path("token/refresh/", auth_views.TokenRefreshView.as_view(), name="token-refresh"),

@@ -86,7 +86,7 @@ def modify_profile_image_filename(instance, filename):
     return f"user_profiles/{str(uuid.uuid4())}"
 
 
-class User(AbstractBaseUser, TimeStampMixin, PermissionsMixin):
+class User(AbstractBaseUser, TimeStampMixin, PermissionsMixin, SoftDeleteMixin):
     id = models.BigAutoField(primary_key=True)
     email = models.EmailField(max_length=64, unique=True, null=False)
     uuid = models.CharField(max_length=22, null=False)

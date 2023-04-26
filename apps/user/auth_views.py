@@ -104,8 +104,8 @@ class BasicSignInView(APIView):
         except Http404:
             raise AuthenticationFailed("No user by the provided email")
 
-        # if user.is_deleted:
-        #     raise ConflictException("this user has been deactivated")
+        if user.is_deleted:
+            raise ConflictException("this user has been deactivated")
 
         if not check_password(password, user.password):
             raise AuthenticationFailed("Incorrect password")
@@ -151,18 +151,39 @@ class BasicSignOutView(APIView):
 class SecessionView(APIView):
     @swagger_auto_schema(
         operation_summary="Leave",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["password"],
+            properties={
+                "password": openapi.Schema(
+                    type=openapi.FORMAT_PASSWORD, description="계정 탈퇴 확인용 비밀번호"
+                )
+            },
+        ),
         responses={200: openapi.Response("user", UserSerializer)},
     )
     def post(self, request, *args, **kwargs):
-        # service = UserService(request.user, request)
-        # user = service.deactivate_user()
+        if not check_password(request.data.get("password"), request.user.password):
+            raise AuthenticationFailed("Password do not match")
+
+        service = UserService(request.user, request)
+        user = service.deactivate_user()
 
         # Hard delete user
-        serializer = UserSerializer(request.user)
-        user_data = copy.deepcopy(serializer.data)
-        request.user.delete()
+        # serializer = UserSerializer(request.user)
+        # user_data = copy.deepcopy(serializer.data)
+        # request.user.delete()
 
-        return Response(user_data, status=status.HTTP_200_OK)
+        return Response(user, status=status.HTTP_200_OK)
+
+
+class RestoreView(APIView):
+    @swagger_auto_schema(
+        operation_summary="Restore deleted user",
+        responses={204: "Restored user. Temporary password sent to user email"},
+    )
+    def post(self, request, *args, **kwargs):
+        pass
 
 
 class CheckDuplicateUsernameView(APIView):
