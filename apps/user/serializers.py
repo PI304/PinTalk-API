@@ -28,7 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
             "service_domain",
             "profile_image",
             "password",
-            "created_at",
+            "is_deleted",
+            "deleted_at" "created_at",
             "updated_at",
         ]
         read_only_fields = [
@@ -36,7 +37,8 @@ class UserSerializer(serializers.ModelSerializer):
             "uuid",
             "access_key",
             "secret_key",
-            "created_at",
+            "is_deleted",
+            "deleted_at" "created_at",
             "updated_at",
         ]
 
