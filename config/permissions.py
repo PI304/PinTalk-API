@@ -31,7 +31,6 @@ class ClientWithHeadersOnly(BasePermission):
     message = "custom headers not present"
 
     def has_permission(self, request, view) -> bool:
-        print(request.headers)
         if (
             not request.headers["X-Pintalk-Access-Key"]
             or not request.headers["X-Pintalk-Secret-Key"]
@@ -39,3 +38,12 @@ class ClientWithHeadersOnly(BasePermission):
             return False
         else:
             return True
+
+
+class ActivatedUserOnly(BasePermission):
+    message = "this user is deactivated"
+
+    def has_permission(self, request, view) -> bool:
+        if request.user.is_deleted:
+            return False
+        return True

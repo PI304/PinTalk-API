@@ -28,6 +28,8 @@ class UserSerializer(serializers.ModelSerializer):
             "service_domain",
             "profile_image",
             "password",
+            "is_deleted",
+            "deleted_at",
             "created_at",
             "updated_at",
         ]
@@ -36,6 +38,8 @@ class UserSerializer(serializers.ModelSerializer):
             "uuid",
             "access_key",
             "secret_key",
+            "is_deleted",
+            "deleted_at",
             "created_at",
             "updated_at",
         ]
