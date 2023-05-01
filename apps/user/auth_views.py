@@ -90,6 +90,7 @@ class BasicSignInView(APIView):
         responses={
             201: openapi.Response("user", UserSerializer),
             401: "Incorrect password",
+            409: "This user has been deactivated. Restore if needed.",
         },
     )
     def post(self, request, *args, **kwargs):
@@ -102,7 +103,9 @@ class BasicSignInView(APIView):
             raise AuthenticationFailed("No user by the provided email")
 
         if user.is_deleted:
-            raise ConflictException("this user has been deactivated")
+            raise ConflictException(
+                "This user has been deactivated. Restore if needed."
+            )
 
         if not check_password(password, user.password):
             raise AuthenticationFailed("Incorrect password")
