@@ -240,7 +240,6 @@ class ChatroomExportView(APIView):
                 description="몇 개 가져올 것인지",
             ),
         ],
-        # responses={200: openapi.Response("ok", ChatMessageSerializer(many=True))},
     ),
 )
 class ChatroomMessageView(generics.ListAPIView):
@@ -253,4 +252,5 @@ class ChatroomMessageView(generics.ListAPIView):
             self.queryset.select_related("chatroom")
             .filter(chatroom_id=self.kwargs.get("pk"))
             .all()
+            .order_by("-datetime")
         )
