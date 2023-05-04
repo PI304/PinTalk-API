@@ -194,6 +194,9 @@ class ChatroomExportView(APIView):
     )
     def get(self, request: Request, pk: int, format=None) -> HttpResponse:
         queryset = Chatroom.objects.select_related("host").filter(id=pk)
+
+        if len(queryset) == 0:
+            raise InstanceNotFound("chatroom with the provided id does not exist")
         instance = queryset.first()
 
         service = ChatroomService(request, instance)
@@ -205,7 +208,7 @@ class ChatroomExportView(APIView):
 
         response = HttpResponse(
             content=content,
-            content_type="text/plain",
+            content_type="application/octet-stream",
             status=200,
         )
         response.headers[
