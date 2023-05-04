@@ -13,8 +13,6 @@ class Chatroom(TimeStampMixin):
     last_checked_at = models.DateTimeField(null=True)
     is_closed = models.BooleanField(default=False, null=False)
     closed_at = models.DateTimeField(null=True)
-    is_fixed = models.BooleanField(default=False, null=True)
-    fixed_at = models.DateTimeField(null=True)
 
     class Meta:
         db_table = "chatroom"

@@ -26,8 +26,6 @@ class SimpleChatroomSerializer(serializers.ModelSerializer):
             "last_checked_at",
             "is_closed",
             "closed_at",
-            "is_fixed",
-            "fixed_at",
             "created_at",
             "updated_at",
         ]
@@ -36,7 +34,6 @@ class SimpleChatroomSerializer(serializers.ModelSerializer):
             "host",
             "name",
             "closed_at",
-            "fixed_at",
             "created_at",
             "updated_at",
         ]
@@ -57,8 +54,6 @@ class ChatroomSerializer(serializers.ModelSerializer):
             "last_checked_at",
             "is_closed",
             "closed_at",
-            "is_fixed",
-            "fixed_at",
             "created_at",
             "updated_at",
         ]
@@ -67,7 +62,6 @@ class ChatroomSerializer(serializers.ModelSerializer):
             "host",
             "name",
             "closed_at",
-            "fixed_at",
             "created_at",
             "updated_at",
         ]
