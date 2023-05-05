@@ -66,7 +66,7 @@ class ChatConsumer(BaseJsonConsumer):
                 logger.info(f"Anonymous guest <{self.user}> joined the chat room")
             else:
                 print(f"Registered user <{self.user.email}> joined the chat room")
-                logger.info(f"Anonymous guest <{self.user}> joined the chat room")
+                logger.info(f"Registered user <{self.user}> joined the chat room")
 
             # latest messages, max 50
             past_messages = self.service.get_past_messages(self.user_type.value)
@@ -151,10 +151,10 @@ class ChatConsumer(BaseJsonConsumer):
 
     @database_sync_to_async
     def close_chatroom(self) -> None:
-        data = {"is_closed": True, "closed_at": datetime.now()}
+        data = {"is_closed": True}
         serializer = ChatroomSerializer(self.chatroom, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
-            serializer.save(updated_at=datetime.now())
+            serializer.save(updated_at=datetime.now(), closed_at=datetime.now())
 
         self.save_latest_message()
         self.service.delete_chatroom_messages_mem()

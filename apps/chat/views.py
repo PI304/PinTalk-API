@@ -222,7 +222,7 @@ class ChatroomExportView(APIView):
     name="get",
     decorator=swagger_auto_schema(
         operation_summary="Get chatroom messages (with pagination)",
-        operation_description="DB 에 저장된 메시지 내역을 가져옵니다. 종료된 채팅일 경우와 레디스에서 제공하는 메시지보다 이전의 메시지가 필요한 경우 사용합니다.",
+        operation_description="DB 에 저장된 메시지 내역을 가져옵니다. 종료된 채팅일 경우에 사용합니다.",
         manual_parameters=[
             openapi.Parameter(
                 "id",

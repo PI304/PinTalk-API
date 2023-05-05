@@ -156,7 +156,7 @@ class ChatConsumerService:
         messages = self.redis_conn.zrevrangebyscore(
             self.group_name, base_score, "-inf", withscores=True, start=0, num=50
         )
-        print(messages[0])
+        messages = sorted(messages, key=lambda x: x[1])
         decoded_messages: List[dict] = []
 
         for m in messages:
