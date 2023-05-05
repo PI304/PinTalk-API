@@ -68,10 +68,12 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
         if not origin:
             raise DenyConnection("Origin header missing")
 
-        try:
-            registered_user = get_object_or_404(
-                User, service_domain=origin, id=self.host.id
-            )
-            return True
-        except Http404:
-            return False
+        if self.host:
+            try:
+                registered_user = get_object_or_404(
+                    User, service_domain=origin, id=self.host.id
+                )
+                return True
+            except Http404:
+                return False
+        return False

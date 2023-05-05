@@ -12,7 +12,7 @@ class AuthorizedOriginOnly(BasePermission):
 
 
 class HostOnly(BasePermission):
-    message = "only the host can modify chatroom resources"
+    message = "only the host can access chatroom resources"
 
     def has_object_permission(self, request, view, obj) -> bool:
         if obj.host_id != request.user.id:
