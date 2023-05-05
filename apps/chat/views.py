@@ -257,3 +257,25 @@ class ChatroomMessageView(generics.ListAPIView):
             .all()
             .order_by("-datetime")
         )
+
+
+class ChatroomRestoreView(generics.UpdateAPIView):
+    queryset = Chatroom.objects.all()
+    serializer_class = SimpleChatroomSerializer
+    allowed_methods = ["PATCH"]
+
+    @swagger_auto_schema(
+        operation_summary="Restore closed chatroom",
+        operation_description="Request body should be empty",
+        request_body=openapi.Schema(type=openapi.TYPE_OBJECT),
+        responses={200: openapi.Response("restored", SimpleChatroomSerializer)},
+    )
+    def patch(self, request, *args, **kwargs) -> Response:
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data={"is_closed": True, "closed_at": None}, partial=True
+        )
+        if serializer.is_valid(raise_exception=True):
+            serializer.save(updated_at=datetime.now())
+
+        return Response(serializer.data)

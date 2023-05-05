@@ -1,7 +1,10 @@
 import logging
+import os
+import redis
 
 from enum import Enum
 
+from dotenv import load_dotenv
 from channels.db import database_sync_to_async
 from channels.exceptions import DenyConnection
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -11,6 +14,7 @@ from django.shortcuts import get_object_or_404
 
 from apps.user.models import User
 
+load_dotenv()
 logger = logging.getLogger("pintalk")
 
 
@@ -41,6 +45,9 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
         self.room_group_name = f"{self.name_prefix}_{self.room_name}"
 
         # more actions here
+        self.redis_conn = redis.StrictRedis(
+            host=os.environ.get("REDIS_HOST"), port=6379, db=0
+        )
 
     async def disconnect(self, close_code):
         try:
