@@ -38,12 +38,20 @@ class UserService(object):
         return secrets.token_hex(32)
 
     @staticmethod
-    def generate_random_code(number_of_strings, length_of_string):
+    def generate_random_code(
+        number_of_strings, length_of_string, use_special_case: bool = False
+    ):
         for x in range(number_of_strings):
-            return "".join(
-                random.choice(string.ascii_letters + string.digits)
-                for _ in range(length_of_string)
-            )
+            if not use_special_case:
+                return "".join(
+                    random.choice(string.ascii_letters + string.digits)
+                    for _ in range(length_of_string)
+                )
+            else:
+                return "".join(
+                    random.choice(string.ascii_letters + string.digits + "~.!@#^_-,?")
+                    for _ in range(length_of_string)
+                )
 
     @staticmethod
     def generate_tokens(user: User):

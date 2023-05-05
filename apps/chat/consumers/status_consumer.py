@@ -28,7 +28,7 @@ class ActiveStatusConsumer(BaseJsonConsumer):
             if self.user.uuid != self.room_name:
                 raise DenyConnection("user uuid mismatch")
         else:
-            existing_user = self.get_user_instance()
+            existing_user = await self.get_user_instance()
             if existing_user is None:
                 raise DenyConnection("user uuid invalid")
 

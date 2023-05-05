@@ -209,7 +209,7 @@ class RestoreView(APIView):
         service: UserService = UserService(user, request)
         service.activate_user()
 
-        temp_password: str = UserService.generate_random_code(3, 8)
+        temp_password: str = UserService.generate_random_code(3, 8, True)
         user.set_password(temp_password)
         user.save(update_fields=["password"])
 
@@ -334,7 +334,7 @@ class PasswordResetView(APIView):
         except Http404:
             raise NotFound("User with the provided email does not exist")
 
-        new_password = UserService.generate_random_code(3, 8)
+        new_password = UserService.generate_random_code(3, 8, True)
         user.set_password(new_password)
         user.save(update_fields=["password"])
 
