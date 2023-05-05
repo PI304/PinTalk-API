@@ -137,7 +137,7 @@ class ChatConsumerService:
     def save_msg_in_mem(self, msg_obj: dict) -> dict:
         return self.redis_service.save_obj(self.group_name, msg_obj)
 
-    def get_past_messages(self, starting_point: Optional[str]) -> List[dict]:
+    def get_past_messages(self, starting_point: Optional[str] = None) -> List[dict]:
         if starting_point is None:
             from_score = datetime.now().strftime("%Y%m%d%H%M%S")
             a_week = str(int(from_score) - 7000000)

@@ -29,7 +29,7 @@ class ChatConsumer(BaseJsonConsumer):
             chatroom = await self.get_chatroom_instance()
             if chatroom.is_closed:
                 # chatroom 이 종료된 상태일 때 연결을 거부함
-                await self.close(code=4009)
+                raise DenyConnection("this chatroom is closed")
             else:
                 self.chatroom = chatroom
                 self.service = ChatConsumerService(
@@ -38,7 +38,7 @@ class ChatConsumer(BaseJsonConsumer):
                 if self.user_type == UserType.GUEST:
                     self.user = chatroom.guest
         except Http404:
-            await self.close(code=4004)
+            raise DenyConnection("chatroom does not exist")
 
         logger.info("chatroom instance valid")
 
@@ -64,7 +64,7 @@ class ChatConsumer(BaseJsonConsumer):
             raise DenyConnection(e)
 
     async def disconnect(self, close_code):
-        if hasattr(self, "room_group_name"):
+        if hasattr(self, "service") and hasattr(self, "room_group_name"):
             await self.save_latest_message()
 
         await super().disconnect(close_code)
