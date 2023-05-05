@@ -5,11 +5,12 @@
 ## Contents
 1. [Managing Chat Message Data](#1-managing-chat-message-data)
 2. [Websocket Connections](#2-websocket-connections)
-3. [Checking Online Status](#3-checking-online-status)
-4. [Error Codes](#4-error-codes)
-5. [Checking New Messages](#5-checking-new-messages)
-6. [Email Notifications](#6-email-notifications)
-7. [Top-Fixing Chatrooms](#7-top-fixing-chatrooms)
+3. [Closing Chatrooms](#3-closing-chatrooms)
+4. [Checking Online Status](#4-checking-online-status)
+5. [Error Codes](#5-error-codes)
+6. [Checking New Messages](#6-checking-new-messages)
+7. [Email Notifications](#7-email-notifications)
+8. [Top-Fixing Chatrooms](#8-top-fixing-chatrooms)
 
 
 
@@ -187,46 +188,88 @@ chatSocket.onmessage = function(e) {
     // Do something here
 };
 ```
-- ```type```: 메시지의 종류를 명시합니다. 일반적인 채팅 메시지일 경우, ```notice```, 그 외 다른 알림은 ```notice``` 타입을 가집니다.
+- ```type```: 메시지의 종류를 명시합니다. 
+  - ```chat_message```: 게스트와 사용자가 주고받는 일반적인 채팅 메시지
+  - ```notice```: 상태 확인 등 알림의 성질을 띠는 메시지
+  - ```request```: 서버에 특정 자원을 요청하는 메시지
 - ```is_host```: 메시지를 작성한 주체를 명시합니다. ```true``` 일 경우, 사용자가 작성한 메시지이며, ```false``` 인 경우 게스트가 작성한 메시지입니다.
 - ```datetime```: 메시지를 보낸 시각이 ```%T-%m-%dT-%H:%M:%S``` 형태로 담겨 있습니다.
 - ```message```: 실제 메시지의 내용입니다.
 
 > ```notice``` 타입의 메시지는 online status 확인용 웹소켓에서 주로 쓰입니다. [3. Checking Online Status](#3-checking-online-status) 섹션을 확인하세요.
 
-## 3. Checking Online Status
+채팅용 웹소켓에 연결했을 때 서버는 해당 소켓으로 최근 1주일이라는 시간 범위 내에서 최신순으로 50개의 메시지를 바로 보냅니다. 
+(요청 시점부터 과거 1주일 동안 나눈 채팅 메시지가 50개를 넘지 않는 경우 50개보다 적은 개수의 메시지가 보내집니다.)
+50개의 메시지보다 더 과거의 데이터가 필요하다면 서버에 새로운 요청을 보내야 합니다. 
+이 요청은 웹소켓 안에서 이루어지며 전송하는 메시지의 타입을 ```request``` 로 지정해야 합니다.
+구체적인 요청 메시지 형태는 아래와 같습니다.
+
+```json
+{
+  "type": "request",
+  "is_host": true,
+  "message": "2023-03-15T20:13:77",
+  "datetime": "2023-03-23T08:15:77"
+}
+```
+```datetime``` 필드는 채팅 메시지와 동일하게 해당 요청을 보내는 시간을 담는 것이며 ```message``` 필드에는
+어느 시점부터의 메시지를 불러오고 싶은지 명시합니다. 서버는 처음 소켓에 연결되었을 때와 동일하게, ```message``` 필드에
+명시된 시점에서 과거 1주일까지의 시간 범위 내에서 최신순으로 50개의 메시지를 보냅니다.
+(해당 시점부터 과거 1주일 동안 나눈 채팅 메시지가 50개를 넘지 않는 경우 50개보다 적은 개수의 메시지가 보내집니다.)
+
+## 3. Closing Chatrooms
+사용자는 게스트와의 대화를 종료할 수 있습니다. *채팅 종료* 는 *채팅방 나가기* 와는 다른 기능이며 그 차이는
+[1. Managing Chat Message Data](#1-managing-chat-message-data) 섹션을 확인해주세요.
+
+채팅을 종료하기 위한 요청은 소켓을 통해 이루어지며, 메시지 타입은 ```notice``` 입니다.
+아래는 서버에 채팅 종료를 요청하는 예시입니다.
+
+```javascript
+chatSocket.send(JSON.stringify({
+     type: 'notice',
+     is_host: true,
+     message: "close",
+     datetime: getDatetime()
+ }));
+```
+해당 요청을 보내면 chatroom 데이터의 ```is_closed``` 필드가 ```True``` 로 저장되고.
+채팅이 종료 처리가 되었다는 메시지를 수신 받은 뒤, 자동으로 소켓의 연결이 끊기게 됩니다.
+아래는 채팅 종료 처리 시, 사용자와 게스트가 받게 될 메시지입니다.
+```json
+{
+  "type": "notice",
+  "is_host": true,
+  "message": "closed",
+  "datetime": "2023-03-23T08:15:77"
+}
+```
+> ⚠️ 종료된 채팅방에 소켓 연결을 시도하면, 403 에러를 응답합니다.
+
+## 4. Checking Online Status
 채팅방에 입장한 게스트는 사용자 (개발자) 가 현재 관리자 페이지에 접속해있는지의 여부를 확인할 수 있습니다.
-각 상황별 시나리오는 다음과 같습니다.
+사용자는 본인의 상태가 변화할 때마다 소켓에 본인의 상태에 대한 메시지를 전송히고 게스트는 사용자가 보낸 가장 최근의
+메시지를 보고 사용자의 상태를 파악합니다.
 
-#### 공통 상황
-1. 사용자가 로그인할 때, 관리자 페이지에서 새로운 웹소켓을 연결하고 연결을 유지합니다.
-2. 게스트가 채팅방에 입장할 때, 채팅방 관련 웹소켓이 아닌 사용자의 온라인 여부를 파악할 수 있는 새로운 웹소켓을 연결합니다.
-3. **게스트와 사용자 모두 소켓에 연결한 후 (onconnect 이벤트), 아래와 같은 메시지를 보내야합니다.** 
-   > ⚠️ 이때의 소켓은 대화용 소켓이 아닌 **온라인/오프라인 여부 확인을 위해 쓰이는 소켓**입니다. 즉, 결과적으로는 대화용 소켓과 상태확인용 소켓, 2 종류의 소켓에 연결해야합니다.
-   ```json
-   {
-      "type": "notice",
-      "is_host": false,
-      "message": "online",
-      "datetime": "2023-03-23T08:15:77"
-   }
-   ```
-4. **입장할 때 뿐만 아니라 notice 타입의 메시지가 수신될 때마다 (onmessage 이벤트)**, 상대에게 본인의 상태를 알리기 위해 위와 같은 메시지를 보내줘야 합니다.
+#### 사용자의 경우
+1. 사용자가 로그인할 때, 관리자 페이지에서 새로운 (상태확인용) 웹소켓을 연결하고 연결을 유지합니다.
+2. 사용자가 로그아웃을 하거나 브라우저 탭을 끈 경우, 해당 웹소켓에서 연결을 해제합니다.
 
-> NPM 패키지 개발자와 관리자 페이지 개발자 모두 ```onconnect```와 ```onmessage``` 이벤트가 잘 부착되어 있는지 확인해야 합니다.
+#### 게스트의 경우
+1. 게스트가 채팅방에 입장할 때, 채팅방 관련 웹소켓이 아닌 사용자의 온라인 여부를 파악할 수 있는 새로운 (상태확인용) 웹소켓을 연결합니다.
+2. 연결을 하면 사용자의 최근 상태에 대한 메시지가 전송됩니다. 해당 메시지의 ```message``` 필드를 보고 현재 사용자가 offline 인지 online 인지 파악할 수 있습니다.
+3. 중간에 사용자가 접속을 하거나 접속을 끊을 수 있기 때문에 웹소켓과의 연결을 유지하며 새로운 상태 메시지가 수신되는지 onmessage 이벤트를 통해 확인합니다.
 
-#### Case 1: 게스트가 메시지를 보내기 전부터 사용자가 이미 로그인 해있을 때
-게스트가 status 확인용 웹소켓에 연결한 후 본인의 status 를 형식이 맞게 send 합니다. 이때 사용자가 온라인 상태라 
-게스트로부터 상태 메시지를 받게 되었다면, 본인의 status 역시 send 해줍니다.
+> ⚠️ 이때의 소켓은 대화용 소켓이 아닌 **온라인/오프라인 여부 확인을 위해 쓰이는 소켓**입니다. 즉, 결과적으로는 대화용 소켓과 상태확인용 소켓, 2 종류의 소켓에 연결해야합니다.
 
-#### Case 2: 사용자가 offline 이었다가 중간에 접속하여 online 이 되었을 때
-게스트가 status 확인용 websocket 에 접속하고 상태를 알리는 메시지를 보냈을 때 사용자가 offline 이라면 그 어떤 메시지도 오지 않습니다.
-중간에 사용자가 접속하여 본인의 status 를 알리는 메시지를 보내게 되면 사용자가 online 상태가 되었음을 알 수 있습니다.
-
-#### Case 3: 사용자가 online 이었다가 중간에 offline 이 되었을 때
-
-사용자가 로그아웃을 하거나 관리자 페이지를 나가게 되면 status 확인용 웹소켓의 연결이 끊어집니다.
-게스트는 사용자가 offline 이라는 메시지를 받게 됩니다.
+상태를 알리는 메시지의 형태는 아래와 같습니다.
+```json
+{
+  "type": "notice",
+  "is_host": false,
+  "message": "online",
+  "datetime": "2023-03-23T08:15:77"
+}
+```
 
 ---
 
@@ -245,27 +288,18 @@ chatSocket.onopen = () => {
 }
 ```
 
-status 관련한 메시지 형태는 다음과 같습니다.
-```javascript
-online_message = {
-     "type": "notice",
-     "is_host": true,
-     "status": "online",
-     "datetime": "2023-03-23T12:22:12",
-}
- ```
-
 **PinTalk 패키지 개발 시, 해당 웹소켓에 연결하여 전송받는 메시지들을 모니터링하고, 그 내용에 따라 status 를 반영해주어야 합니다.**
 
 
-## 4. Error Codes
+## 5. Error Codes
 웹소켓의 close event 에는 HTTP 프로토콜처럼 code 가 포함되어 있습니다. 보편적인 close event 의 code는 [여기 링크](https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code) 에서 확인해볼 수 있습니다.
 
 4000번부터는 custom error code 입니다. PinTalk 에서는 다음과 같은 커스텀 코드를 이용합니다.
 - **4000**: HTTP 의 Bad Request(400) 와 동일, 메시지의 형태가 약속에 어긋남
+- **4003**: HTTP 의 Permission Denied(403) 와 동일, 메시지를 보낼 권한이 없음
 - **4004**: HTTP 의 Not Found(404) 와 동일, 데이터 베이스에 요청한 리소스가 존재하지 않음
 
-## 5. Checking New Messages
+## 6. Checking New Messages
 관리자 페이지에서 사용자는 읽지 않은 새로운 메시지가 있는 채팅방을 구분할 수 있어야 합니다. 또한 새로운 메시지의
 내용 역시 채팅방 목록에서 미리 볼 수 있어야 합니다. 이를 위해 chatroom 데이터는 아래와 같은 필드들을 가지고 있습니다.
 전체 데이터는 섹션 [2. Websocket Connections](#2-websocket-connections) 에서 다시 확인해볼 수 있습니다.
@@ -279,11 +313,11 @@ online_message = {
 사용자가 확인하지 않은 새로운 메시지가 도착했다는 것을 의미합니다. 
 
 
-## 6. Email Notifications
+## 7. Email Notifications
 게스트나 사용자가 채팅방에 입장해있는 상태가 아닐 때 메시지가 도착한다면 이메일을 보냅니다. 
 
 *이 피처는 추후 추가 예정입니다.*
 
-## 7. Top-Fixing Chatrooms
+## 8. Top-Fixing Chatrooms
 유저는 **총 5개**까지의 채팅방을 상단 고정할 수 있습니다. 상단 고정을 하는 기능은 백엔드 서버를 통해서 
 수행하는 것이 아닌, **프론트엔드에서 로컬 스토리지나 쿠키를 이용해서 구현**하도록 합니다.
