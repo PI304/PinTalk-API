@@ -17,6 +17,7 @@ class HostOnly(BasePermission):
     def has_object_permission(self, request, view, obj) -> bool:
         if obj.host_id != request.user.id:
             return False
+        return True
 
 
 class RequestUserOnly(BasePermission):
