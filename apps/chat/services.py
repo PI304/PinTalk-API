@@ -137,30 +137,33 @@ class ChatConsumerService:
     def save_msg_in_mem(self, msg_obj: dict) -> dict:
         return self.redis_service.save_obj(self.group_name, msg_obj)
 
-    def get_past_messages(self, starting_point: Optional[str] = None) -> List[dict]:
+    def get_past_messages(
+        self, is_host: bool, starting_point: Optional[str] = None
+    ) -> List[dict]:
         if starting_point is None:
-            from_score = datetime.now().strftime("%Y%m%d%H%M%S")
-            a_week = str(int(from_score) - 7000000)
+            base_score = datetime.now().strftime("%Y%m%d%H%M%S")
         else:
             try:
-                from_score = datetime.strptime(starting_point, "%Y-%m-%dT%H:%M:%S")
+                starting_datetime = datetime.strptime(
+                    starting_point, "%Y-%m-%dT%H:%M:%S"
+                )
+                base_score = starting_datetime.strftime("%Y%m%d%H%M%S")
             except ValueError:
                 raise InvalidInputException(
                     "Incorrect data format, should be YYYY-MM-DDTHH:MM:SS"
                 )
 
-            from_score = int(str(from_score)) - 1
-            a_week = str(from_score - 7000000)
-
-        messages = self.redis_conn.zrangebyscore(
-            self.group_name, a_week, from_score, 0, 50
+        messages = self.redis_conn.zrevrangebyscore(
+            self.group_name, base_score, "-inf", withscores=True, start=0, num=50
         )
-
+        print(messages[0])
         decoded_messages: List[dict] = []
 
         for m in messages:
-            json_dict = m.decode("utf-8")
-            decoded_messages.append(dict(json.loads(json_dict)))
+            json_str = m[0].decode(
+                "utf-8"
+            )  # zrevrangebyscore 의 아이템은 (value, score) 형태이므로 m[0]
+            decoded_messages.append(dict(for_host=is_host, **json.loads(json_str)))
         return decoded_messages
 
     def get_latest_message(self) -> Union[None, dict]:

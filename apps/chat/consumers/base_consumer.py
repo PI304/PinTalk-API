@@ -31,13 +31,10 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         self.user = self.scope["user"]
+        self.host = None
 
         if isinstance(self.user, AnonymousUser):
-            # Check Origin
-            host = await self.get_host_by_origin_header()
-            logger.info("anonymous user's origin verified")
             self.user_type = UserType.GUEST
-            self.host = host
         else:
             self.user_type = UserType.USER
 
@@ -62,7 +59,7 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
         pass
 
     @database_sync_to_async
-    def get_host_by_origin_header(self):
+    def check_valid_guest(self) -> bool:
         origin = None
         for header_tuple in self.scope["headers"]:
             if bytes("origin", "utf-8") in header_tuple:
@@ -72,7 +69,9 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
             raise DenyConnection("Origin header missing")
 
         try:
-            registered_user = get_object_or_404(User, service_domain=origin)
+            registered_user = get_object_or_404(
+                User, service_domain=origin, id=self.host.id
+            )
+            return True
         except Http404:
-            raise DenyConnection("Request origin not registered")
-        return registered_user
+            return False
