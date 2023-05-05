@@ -1,13 +1,18 @@
 import logging
 from datetime import datetime
+from typing import Union
 
+from channels.db import database_sync_to_async
 from channels.exceptions import DenyConnection
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 
 from apps.chat.consumers.base_consumer import BaseJsonConsumer
 from apps.chat.consumers.chat_consumer import UserType
 from apps.chat.serializers import ChatMessageInMemorySerializer
 from apps.chat.services import StatusConsumerService
+from apps.user.models import User
 
 logger = logging.getLogger("pintalk")
 
@@ -18,6 +23,21 @@ class ActiveStatusConsumer(BaseJsonConsumer):
 
     async def connect(self):
         await super().connect()
+
+        if self.user_type == UserType.USER:
+            if self.user.uuid != self.room_name:
+                raise DenyConnection("user uuid mismatch")
+        else:
+            existing_user = self.get_user_instance()
+            if existing_user is None:
+                raise DenyConnection("user uuid invalid")
+
+            self.host = existing_user
+            is_valid_guest = await self.check_valid_guest()
+            if not is_valid_guest:
+                raise DenyConnection("Guest's origin not valid")
+
+            logger.info("anonymous user's origin verified")
 
         self.service = StatusConsumerService(self.room_group_name, self.redis_conn)
 
@@ -99,3 +119,10 @@ class ActiveStatusConsumer(BaseJsonConsumer):
             "message": status,
             "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         }
+
+    @database_sync_to_async
+    def get_user_instance(self) -> Union[User, None]:
+        try:
+            return get_object_or_404(User, uuid=self.room_name)
+        except Http404:
+            return None
