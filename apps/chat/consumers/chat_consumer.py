@@ -91,7 +91,9 @@ class ChatConsumer(BaseJsonConsumer):
             print("in request")
             try:
                 past_messages = self.service.get_past_messages(
-                    self.user_type.value, content.get("message", None)
+                    self.user_type.value,
+                    is_ascending=False,
+                    starting_point=content.get("message", None),
                 )
                 await self.channel_layer.group_send(
                     self.room_group_name,

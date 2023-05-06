@@ -138,7 +138,10 @@ class ChatConsumerService:
         return self.redis_service.save_obj(self.group_name, msg_obj)
 
     def get_past_messages(
-        self, is_host: bool, starting_point: Optional[str] = None
+        self,
+        is_host: bool,
+        is_ascending: bool = True,
+        starting_point: Optional[str] = None,
     ) -> List[dict]:
         if starting_point is None:
             base_score = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -156,7 +159,8 @@ class ChatConsumerService:
         messages = self.redis_conn.zrevrangebyscore(
             self.group_name, base_score, "-inf", withscores=True, start=0, num=50
         )
-        messages = sorted(messages, key=lambda x: x[1])
+        if is_ascending:
+            messages = sorted(messages, key=lambda x: x[1])
         decoded_messages: List[dict] = []
 
         for m in messages:
