@@ -70,8 +70,10 @@ class ChatConsumer(BaseJsonConsumer):
 
             # latest messages, max 50
             past_messages = self.service.get_past_messages(self.user_type.value)
-            for m in past_messages:
-                await self.channel_layer.group_send(self.room_group_name, m)
+
+            await self.channel_layer.group_send(
+                self.room_group_name, {"data": past_messages, "type": "chat_message"}
+            )
 
         except Exception as e:
             print(e)
@@ -91,8 +93,10 @@ class ChatConsumer(BaseJsonConsumer):
                 past_messages = self.service.get_past_messages(
                     self.user_type.value, content.get("message", None)
                 )
-                for m in past_messages:
-                    await self.channel_layer.group_send(self.room_group_name, m)
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {"data": past_messages, "type": "chat_message"},
+                )
             except InvalidInputException:
                 await self.close(4000)
 
