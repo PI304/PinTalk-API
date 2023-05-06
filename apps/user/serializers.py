@@ -71,6 +71,8 @@ class ClientSerializer(serializers.ModelSerializer):
 
 
 class UserConfigurationSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
     class Meta:
         model = UserConfiguration
         fields = "__all__"

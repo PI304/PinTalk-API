@@ -151,6 +151,7 @@ class ChatConsumerService:
                     starting_point, "%Y-%m-%dT%H:%M:%S"
                 )
                 base_score = starting_datetime.strftime("%Y%m%d%H%M%S")
+                base_score = str(int(base_score) - 1)
             except ValueError:
                 raise InvalidInputException(
                     "Incorrect data format, should be YYYY-MM-DDTHH:MM:SS"

@@ -8,14 +8,11 @@ from channels.exceptions import DenyConnection
 
 from datetime import datetime
 from django.http import Http404
-from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
 
 from apps.chat.consumers.base_consumer import BaseJsonConsumer, UserType
 from apps.chat.models import Chatroom
 from apps.chat.serializers import ChatroomSerializer
-from apps.chat.services import ChatroomService, ChatConsumerService
-from apps.user.models import User
+from apps.chat.services import ChatConsumerService
 from config.exceptions import InvalidInputException
 
 load_dotenv()
@@ -88,7 +85,6 @@ class ChatConsumer(BaseJsonConsumer):
     # Receive message from WebSocket
     async def receive_json(self, content, **kwargs):
         if content["type"] == "request":
-            print("in request")
             try:
                 past_messages = self.service.get_past_messages(
                     self.user_type.value,
