@@ -26,6 +26,7 @@ class RequestUserOnly(BasePermission):
     def has_object_permission(self, request, view, obj) -> bool:
         if obj.user_id != request.user.id:
             return False
+        return True
 
 
 class ClientWithHeadersOnly(BasePermission):

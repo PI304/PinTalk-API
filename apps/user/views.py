@@ -10,6 +10,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework.generics import get_object_or_404 as _get_object_or_404
 
 from apps.user.models import User, UserConfiguration
 from apps.user.serializers import (
@@ -153,6 +154,7 @@ class ClientProfileView(generics.RetrieveAPIView):
                 )
             },
         ),
+        responses={200: openapi.Response("updated", UserConfigurationSerializer)},
     ),
 )
 class UserConfigView(generics.UpdateAPIView):
@@ -160,3 +162,20 @@ class UserConfigView(generics.UpdateAPIView):
     serializer_class = UserConfigurationSerializer
     queryset = UserConfiguration.objects.all()
     permission_classes = [RequestUserOnly]
+    lookup_field = "user_id"
+
+    def get_queryset(self):
+        return self.queryset.select_related("user").all()
+
+    def get_object(self):
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        obj = _get_object_or_404(queryset, **filter_kwargs)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
