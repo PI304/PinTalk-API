@@ -188,7 +188,7 @@ class ChatConsumer(BaseJsonConsumer):
 
     @database_sync_to_async
     def reopen_chatroom(self):
-        data = {"is_closed": False, "closed_at": None}
+        data = {"is_closed": False}
         serializer = ChatroomSerializer(self.chatroom, data=data, partial=True)
         if serializer.is_valid(raise_exception=True):
-            serializer.save(updated_at=datetime.now())
+            serializer.save(updated_at=datetime.now(), closed_at=None)
