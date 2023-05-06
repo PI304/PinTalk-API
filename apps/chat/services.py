@@ -139,7 +139,6 @@ class ChatConsumerService:
 
     def get_past_messages(
         self,
-        is_host: bool,
         is_ascending: bool = True,
         starting_point: Optional[str] = None,
     ) -> List[dict]:
@@ -168,7 +167,7 @@ class ChatConsumerService:
             json_str = m[0].decode(
                 "utf-8"
             )  # zrevrangebyscore 의 아이템은 (value, score) 형태이므로 m[0]
-            decoded_messages.append(dict(for_host=is_host, **json.loads(json_str)))
+            decoded_messages.append(dict(json.loads(json_str)))
         return decoded_messages
 
     def get_latest_message(self) -> Union[None, dict]:
