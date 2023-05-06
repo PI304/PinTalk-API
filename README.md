@@ -217,6 +217,30 @@ chatSocket.onmessage = function(e) {
 어느 시점부터의 메시지를 불러오고 싶은지 명시합니다. 서버는 처음 소켓에 연결되었을 때와 동일하게, ```message``` 필드에
 명시된 시점에서 최신순으로 50개의 메시지를 보냅니다.
 
+> ⚠️ 과거의 메시지를 한번에 받아올 때와 하나의 메시지만을 수신할 때의 데이터 형태는 다릅니다. 아래를 참고해주세요.
+
+메시지 한 개를 받는 상황
+```json
+{
+  "type": "chat_message",
+  "is_host": true,
+  "message": "hi",
+  "datetime": "2023-03-23T08:15:77"
+}
+```
+
+과거 메시지를 여러 개 받는 상황 (처음에 소켓 접속 시, request 타입으로 과거 메시지 요청 시)
+```json 
+{
+  "data": [
+    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77"},
+    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77"},
+    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77"},
+  ],
+  "type": "chat_message"
+}
+```
+
 ## 3. Closing Chatrooms
 사용자는 게스트와의 대화를 종료할 수 있습니다. *채팅 종료* 는 *채팅방 나가기* 와는 다른 기능이며 그 차이는
 [1. Managing Chat Message Data](#1-managing-chat-message-data) 섹션을 확인해주세요.
