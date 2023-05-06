@@ -66,10 +66,15 @@ class ChatConsumer(BaseJsonConsumer):
                 logger.info(f"Registered user <{self.user}> joined the chat room")
 
             # latest messages, max 50
-            past_messages = self.service.get_past_messages(self.user_type.value)
+            past_messages = self.service.get_past_messages()
 
             await self.channel_layer.group_send(
-                self.room_group_name, {"data": past_messages, "type": "chat_message"}
+                self.room_group_name,
+                {
+                    "data": past_messages,
+                    "type": "chat_message",
+                    "for_host": bool(self.user_type.value),
+                },
             )
 
         except Exception as e:
@@ -87,13 +92,16 @@ class ChatConsumer(BaseJsonConsumer):
         if content["type"] == "request":
             try:
                 past_messages = self.service.get_past_messages(
-                    self.user_type.value,
                     is_ascending=False,
                     starting_point=content.get("message", None),
                 )
                 await self.channel_layer.group_send(
                     self.room_group_name,
-                    {"data": past_messages, "type": "chat_message"},
+                    {
+                        "data": past_messages,
+                        "type": "chat_message",
+                        "for_host": self.user_type.value,
+                    },
                 )
             except InvalidInputException:
                 await self.close(4000)
@@ -117,11 +125,17 @@ class ChatConsumer(BaseJsonConsumer):
     # Receive message from room group
     async def chat_message(self, event):
         # Send message to WebSocket
-        if "for_host" in event:
-            if event["for_host"] and self.user_type == UserType.USER:
+        if "data" in event:
+            if (
+                event["for_host"] == self.user_type.value
+                and self.user_type == UserType.USER
+            ):
                 del event["for_host"]
                 await self.send_json(event)
-            elif event["for_host"] == False and self.user_type == UserType.GUEST:
+            elif (
+                event["for_host"] == self.user_type.value
+                and self.user_type == UserType.GUEST
+            ):
                 del event["for_host"]
                 await self.send_json(event)
         else:
