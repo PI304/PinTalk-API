@@ -7,7 +7,6 @@ from channels.db import database_sync_to_async
 from channels.exceptions import DenyConnection
 
 from datetime import datetime
-from django.http import Http404
 
 from apps.chat.consumers.base_consumer import BaseJsonConsumer, UserType
 from apps.chat.models import Chatroom
@@ -184,7 +183,7 @@ class ChatConsumer(BaseJsonConsumer):
                 .get()
             )
             return chatroom
-        except Http404:
+        except Chatroom.DoesNotExist:
             return None
 
     @database_sync_to_async
