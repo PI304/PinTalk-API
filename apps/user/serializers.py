@@ -49,7 +49,25 @@ class UserSerializer(serializers.ModelSerializer):
         return super(UserSerializer, self).create(validated_data)
 
 
+class UserConfigurationSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = UserConfiguration
+        fields = "__all__"
+        read_only_fields = ["id", "created_at", "updated_at", "user"]
+
+
+class SimpleUserConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserConfiguration
+        fields = ["use_online_status"]
+        read_only_fields = ["id", "created_at", "updated_at", "user"]
+
+
 class ClientSerializer(serializers.ModelSerializer):
+    configs = SimpleUserConfigurationSerializer(read_only=True)
+
     class Meta:
         model = User
         fields = [
@@ -59,6 +77,7 @@ class ClientSerializer(serializers.ModelSerializer):
             "description",
             "service_name",
             "profile_image",
+            "configs",
         ]
         read_only_fields = [
             "email",
@@ -67,13 +86,5 @@ class ClientSerializer(serializers.ModelSerializer):
             "description",
             "service_name",
             "profile_image",
+            "configs",
         ]
-
-
-class UserConfigurationSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-
-    class Meta:
-        model = UserConfiguration
-        fields = "__all__"
-        read_only_fields = ["id", "created_at", "updated_at", "user"]

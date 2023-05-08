@@ -1,5 +1,6 @@
 import datetime
 
+from django.db.models import QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -115,7 +116,7 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             ),
         ],
         responses={
-            200: openapi.Response("user", UserSerializer),
+            200: openapi.Response("user", ClientSerializer),
             400: "Passwords doesn't match",
         },
     ),
@@ -130,8 +131,12 @@ class ClientProfileView(generics.RetrieveAPIView):
         secret_key = self.request.headers.get("X-PinTalk-Secret-Key", None)
 
         try:
-            obj = get_object_or_404(User, access_key=access_key, secret_key=secret_key)
-        except Http404:
+            obj = (
+                self.get_queryset()
+                .filter(access_key=access_key, secret_key=secret_key)
+                .first()
+            )
+        except User.DoesNotExist:
             raise AuthenticationFailed("invalid access_key or secret_key")
 
         self.check_object_permissions(self.request, obj)
