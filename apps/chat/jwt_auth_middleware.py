@@ -25,8 +25,7 @@ logger = logging.getLogger("pintalk")
 @database_sync_to_async
 def get_user(validated_token):
     try:
-        user = User.objects.get(id=validated_token["user_id"])
-        print(user)
+        user = User.objects.select_related("configs").get(id=validated_token["user_id"])
         return user
     except User.DoesNotExist:
         raise AuthenticationFailed()

@@ -4,8 +4,6 @@ from typing import Union
 
 from channels.db import database_sync_to_async
 from channels.exceptions import DenyConnection
-from django.http import Http404
-from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 
 from apps.chat.consumers.base_consumer import BaseJsonConsumer
@@ -26,16 +24,26 @@ class ActiveStatusConsumer(BaseJsonConsumer):
 
         if self.user_type == UserType.USER:
             if self.user.uuid != self.room_name:
-                raise DenyConnection("user uuid mismatch")
+                logger.info("user uuid mismatch")
+                await self.deny_connection(4004)
+            if not self.user.configs.use_online_status:
+                logger.info("online status function deactivated")
+                await self.deny_connection(4009)
         else:
             existing_user = await self.get_user_instance()
             if existing_user is None:
-                raise DenyConnection("user uuid invalid")
+                logger.info("user uuid invalid")
+                await self.deny_connection(4004)
 
             self.host = existing_user
             is_valid_guest = await self.check_valid_guest()
             if not is_valid_guest:
-                raise DenyConnection("Guest's origin not valid")
+                logger.info("Guest's origin not valid")
+                await self.deny_connection(4003)
+
+            if not self.host.configs.use_online_status:
+                logger.info("online status function deactivated")
+                await self.deny_connection(4009)
 
             logger.info("anonymous user's origin verified")
 
@@ -123,6 +131,11 @@ class ActiveStatusConsumer(BaseJsonConsumer):
     @database_sync_to_async
     def get_user_instance(self) -> Union[User, None]:
         try:
-            return get_object_or_404(User, uuid=self.room_name)
-        except Http404:
+            user = (
+                User.objects.select_related("configs")
+                .filter(uuid=self.room_name)
+                .first()
+            )
+            return user
+        except User.DoesNotExist:
             return None

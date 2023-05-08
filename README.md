@@ -319,9 +319,19 @@ chatSocket.onopen = () => {
 웹소켓의 close event 에는 HTTP 프로토콜처럼 code 가 포함되어 있습니다. 보편적인 close event 의 code는 [여기 링크](https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code) 에서 확인해볼 수 있습니다.
 
 4000번부터는 custom error code 입니다. PinTalk 에서는 다음과 같은 커스텀 코드를 이용합니다.
-- **4000**: HTTP 의 Bad Request(400) 와 동일, 메시지의 형태가 약속에 어긋남
-- **4003**: HTTP 의 Permission Denied(403) 와 동일, 메시지를 보낼 권한이 없음
-- **4004**: HTTP 의 Not Found(404) 와 동일, 데이터 베이스에 요청한 리소스가 존재하지 않음
+
+### Chat Socket 의 경우
+- **4000**: HTTP 의 Bad Request(400) 와 유사, 메시지의 형태가 약속에 어긋남
+- **4003**: HTTP 의 Permission Denied(403) 와 유사, 게스트의 Origin 이 허용되지 않은 도메인임
+- **4004**: HTTP 의 Not Found(404) 와 유사, 요청 uri 의 채팅방 이름이 존재하지 않음
+- **4009**: HTTP 의 Conflict(409) 와 유사, online status 사용을 활성화 해두지 않은 유저임
+
+
+### Status Socket 의 경우
+- **4003**: HTTP 의 Permission Denied(403) 와 유사, 게스트의 Origin 이 허용되지 않은 도메인임
+- **4004**: HTTP 의 Not Found(404) 와 유사, 요청 uri 의 uuid 를 가진 유저가 존재하지 않거나 올바르지 않음
+- **4009**: HTTP 의 Conflict(409) 와 유사, online status 사용을 활성화 해두지 않은 유저임
+
 
 ## 6. Checking New Messages
 관리자 페이지에서 사용자는 읽지 않은 새로운 메시지가 있는 채팅방을 구분할 수 있어야 합니다. 또한 새로운 메시지의

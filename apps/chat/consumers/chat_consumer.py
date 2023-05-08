@@ -29,19 +29,23 @@ class ChatConsumer(BaseJsonConsumer):
         # 유효한 chatroom name 인지 확인
         chatroom = await self.get_chatroom_instance()
         if chatroom is None:
-            raise DenyConnection("invalid chatroom name")
+            logger.info("invalid chatroom name")
+            await self.deny_connection(4004)
+
         self.chatroom = chatroom
         self.host = self.chatroom.host
 
         # (유효하다면) User 의 경우 chatroom 이 is_closed = True 이면 DenyConnection
         if self.user_type == UserType.USER and self.chatroom.is_closed:
-            raise DenyConnection("this chatroom is closed")
+            logger.info("this chatroom is closed")
+            await self.deny_connection(4009)
 
         # (유효하다면) Guest 의 경우 origin 확인하고 is_closed = True 면 False 로 바꿈
         if self.user_type == UserType.GUEST:
             is_valid_guest = await self.check_valid_guest()
             if not is_valid_guest:
-                raise DenyConnection("Guest's origin not valid")
+                logger.info("Guest's origin not valid")
+                await self.deny_connection(4003)
             logger.info("anonymous user's origin verified")
 
             self.guest = self.chatroom.guest
