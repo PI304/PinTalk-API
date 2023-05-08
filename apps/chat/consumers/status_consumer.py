@@ -27,15 +27,23 @@ class ActiveStatusConsumer(BaseJsonConsumer):
         if self.user_type == UserType.USER:
             if self.user.uuid != self.room_name:
                 raise DenyConnection("user uuid mismatch")
+            if not self.user.configs.use_online_status:
+                raise DenyConnection("online status function deactivated")
         else:
             existing_user = await self.get_user_instance()
             if existing_user is None:
-                raise DenyConnection("user uuid invalid")
+                logger.info("user uuid invalid")
+                raise DenyConnection()
 
             self.host = existing_user
             is_valid_guest = await self.check_valid_guest()
             if not is_valid_guest:
-                raise DenyConnection("Guest's origin not valid")
+                logger.info("Guest's origin not valid")
+                raise DenyConnection()
+
+            if not self.host.configs.use_online_status:
+                logger.info("online status function deactivated")
+                raise DenyConnection()
 
             logger.info("anonymous user's origin verified")
 
@@ -123,6 +131,11 @@ class ActiveStatusConsumer(BaseJsonConsumer):
     @database_sync_to_async
     def get_user_instance(self) -> Union[User, None]:
         try:
-            return get_object_or_404(User, uuid=self.room_name)
-        except Http404:
+            user = (
+                User.objects.select_related("configs")
+                .filter(uuid=self.room_name)
+                .first()
+            )
+            return user
+        except User.DoesNotExist:
             return None
