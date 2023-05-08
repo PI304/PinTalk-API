@@ -155,7 +155,7 @@ websocket 에 성공적으로 연결되기 위해선 credential 확인이 필요
 
 2. 이미 인증 과정을 거쳐 관리자 페이지에 로그인한 유저가 입장하는 경우
     - websocket 연결을 요청하는 uri 에 쿼리 스트링으로 access token 을 추가합니다.
-    - [2) 웹소켓 연결하기](#2-웹소켓-연결하기) 섹션의 예제 코드로 제시했던 uri 뒤에 ```token``` 이라는 이름으로 쿼리 스트링을 추가해야합니다.
+    - [2. WebSocket Connections](#2-websocket-connections) 섹션의 예제 코드로 제시했던 uri 뒤에 ```token``` 이라는 이름으로 쿼리 스트링을 추가해야합니다.
     - ```const request_uri = `ws://3.34.7.189/ws/chat/${roomName}/?token=${user'stoken}`;```
          > ⚠️ jwt token 은 delimiter 로 온점(.) 을 사용합니다. 하지만, query string 에 온점을 포함시키면 separator 로 인식하는 경우가 있으므로 
          > manual 하게 온점을 슬래쉬(/) 로 바꾸어 전달하도록 합니다.
@@ -197,7 +197,7 @@ chatSocket.onmessage = function(e) {
 - ```datetime```: 메시지를 보낸 시각이 ```%T-%m-%dT-%H:%M:%S``` 형태로 담겨 있습니다.
 - ```message```: 실제 메시지의 내용입니다.
 
-> ```notice``` 타입의 메시지는 online status 확인용 웹소켓에서 주로 쓰입니다. [3. Checking Online Status](#3-checking-online-status) 섹션을 확인하세요.
+> ```notice``` 타입의 메시지는 online status 확인용 웹소켓에서 주로 쓰입니다. [4. Checking Online Status](#4-checking-online-status) 섹션을 확인하세요.
 
 채팅용 웹소켓에 연결했을 때 서버는 해당 소켓으로 최근순으로 50 개의 메시지를 소켓으로 보냅니다. 
 (과거에 주고받은 채팅 메시지가 50개를 넘지 않는 경우 50개보다 적은 개수의 메시지가 보내집니다.)
