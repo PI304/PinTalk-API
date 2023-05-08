@@ -77,3 +77,8 @@ class BaseJsonConsumer(AsyncJsonWebsocketConsumer):
             except Http404:
                 return False
         return False
+
+    async def deny_connection(self, error_code: int):
+        await self.accept()
+        await self.close(error_code)
+        raise DenyConnection()
