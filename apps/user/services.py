@@ -4,12 +4,24 @@ import uuid
 import base64
 import secrets
 import random
+from typing import Type
 
+import jwt
 import shortuuid
+from django.conf import settings
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from jwt import InvalidTokenError
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.user.models import User
+from config.exceptions import InternalServerError
 
 
 class UserService(object):
@@ -63,3 +75,32 @@ class UserService(object):
     @staticmethod
     def generate_uuid():
         return shortuuid.uuid()
+
+    @staticmethod
+    def blacklist_token(token: str) -> None:
+        RefreshToken(token).blacklist()
+
+    @staticmethod
+    def authenticate_refresh_token(request: Request) -> Type[int]:
+        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT["AUTH_COOKIE"]) or None
+
+        if refresh_token is None:
+            raise AuthenticationFailed("Refresh token is not in cookie")
+
+        try:
+            decoded_jwt = jwt.decode(
+                jwt=refresh_token,
+                key=settings.SIMPLE_JWT["SIGNING_KEY"],
+                algorithms=["HS256"],
+            )
+        except InvalidTokenError as e:
+            raise AuthenticationFailed("refresh token invalid. Login again")
+
+        UserService.blacklist_token(refresh_token)
+
+        try:
+            outstanding_token = get_object_or_404(OutstandingToken, token=refresh_token)
+        except Http404:
+            raise InternalServerError()
+
+        return outstanding_token.user_id

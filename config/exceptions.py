@@ -65,6 +65,18 @@ class InvalidInputException(APIException):
             self.detail = detail
 
 
+class InternalServerError(APIException):
+    status_code = 500
+    default_detail = "something went wrong"
+    default_code = "server_error"
+
+    def __init__(self, detail=None):
+        if detail is None:
+            self.detail = self.default_detail
+        else:
+            self.detail = detail
+
+
 def custom_exception_handler(exc, context):
     # Call REST framework's default exception handler first,
     # to get the standard error response.
@@ -104,6 +116,8 @@ def custom_exception_handler(exc, context):
         elif isinstance(exc, InvalidInputException):
             customized_response = {"code": response.status_code, "detail": exc.detail}
         elif isinstance(exc, ConflictException):
+            customized_response = {"code": response.status_code, "detail": exc.detail}
+        elif isinstance(exc, InternalServerError):
             customized_response = {"code": response.status_code, "detail": exc.detail}
         else:
             customized_response = {
