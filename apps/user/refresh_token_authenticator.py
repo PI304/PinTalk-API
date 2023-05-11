@@ -2,6 +2,8 @@ import jwt
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.conf import settings
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class RefreshTokenAuthentication(JWTAuthentication):
@@ -10,6 +12,13 @@ class RefreshTokenAuthentication(JWTAuthentication):
 
         if refresh_token is None:
             raise AuthenticationFailed("Refresh token is not in cookie")
+
+        token_obj = RefreshToken(refresh_token)
+        try:
+            token_obj.check_blacklist()
+        except TokenError as e:
+            # token is blacklisted -> invalid
+            raise AuthenticationFailed("invalid refresh token")
 
         decoded_jwt = jwt.decode(
             jwt=refresh_token,
@@ -26,5 +35,8 @@ class RefreshTokenAuthentication(JWTAuthentication):
 
         if not user.is_active:
             raise AuthenticationFailed("User is inactive", code="user_inactive")
+
+        # blacklist validated token -> no longer able to use this token
+        token_obj.blacklist()
 
         return user, refresh_token
