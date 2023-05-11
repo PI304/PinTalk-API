@@ -467,7 +467,7 @@ class TokenRefreshView(APIView):
     Refresh tokens and returns a new pair.
     """
 
-    # authentication_classes = [RefreshTokenAuthentication]
+    authentication_classes = [RefreshTokenAuthentication]
     permission_classes = [permissions.AllowAny]
     renderer_classes = [CustomRenderer]
 
@@ -483,44 +483,22 @@ class TokenRefreshView(APIView):
         ],
         responses={
             201: openapi.Response("Pair of new tokens", TokenRefreshSerializer),
-            204: "Access token not expired",
             401: "Authentication Failed",
         },
     )
     def post(self, request, *args, **kwargs):
-        access_token_authenticator = JWTAuthentication()
-
-        try:
-            access_token_validation = access_token_authenticator.authenticate(request)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except InvalidToken or AuthenticationFailed:
-            # access_token is invalid
-
-            # Get user id from outstanding token
-            request_user_id = UserService.authenticate_refresh_token(request)
-
-            # Get user object
-            try:
-                request_user = get_object_or_404(User, id=request_user_id)
-            except Http404:
-                raise InstanceNotFound("this user does not exist. Try to login again")
-
-            try:
-                new_access, new_refresh = UserService.generate_tokens(request_user)
-                res = Response(
-                    dict(access_token=new_access),
-                    status=status.HTTP_201_CREATED,
-                )
-                res.set_cookie(
-                    settings.SIMPLE_JWT["AUTH_COOKIE"],
-                    new_refresh,
-                    max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
-                    httponly=True,
-                    secure=True,
-                    domain="pintalk.app",
-                    samesite="Lax",
-                )
-                return res
-
-            except InvalidToken:
-                raise AuthenticationFailed("Both tokens are invalid. Login again.")
+        new_access, new_refresh = UserService.generate_tokens(request.user)
+        res = Response(
+            dict(access_token=new_access),
+            status=status.HTTP_201_CREATED,
+        )
+        res.set_cookie(
+            settings.SIMPLE_JWT["AUTH_COOKIE"],
+            new_refresh,
+            max_age=settings.SIMPLE_JWT["AUTH_COOKIE_EXPIRES"],
+            httponly=True,
+            secure=True,
+            domain="pintalk.app",
+            samesite="Lax",
+        )
+        return res
