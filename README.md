@@ -267,7 +267,7 @@ chatSocket.send(JSON.stringify({
   "datetime": "2023-03-23T08:15:77"
 }
 ```
-> ⚠️ 종료된 채팅방에 소켓 연결을 시도하면, 403 에러를 응답합니다.
+> ⚠️ 종료된 채팅방에 소켓 연결을 시도하면, 4009 소켓 에러가 반환됩니다.
 
 ## 4. Checking Online Status
 채팅방에 입장한 게스트는 사용자 (개발자) 가 현재 관리자 페이지에 접속해있는지의 여부를 확인할 수 있습니다.
@@ -324,7 +324,7 @@ chatSocket.onopen = () => {
 - **4000**: HTTP 의 Bad Request(400) 와 유사, 메시지의 형태가 약속에 어긋남
 - **4003**: HTTP 의 Permission Denied(403) 와 유사, 게스트의 Origin 이 허용되지 않은 도메인임
 - **4004**: HTTP 의 Not Found(404) 와 유사, 요청 uri 의 채팅방 이름이 존재하지 않음
-- **4009**: HTTP 의 Conflict(409) 와 유사, online status 사용을 활성화 해두지 않은 유저임
+- **4009**: HTTP 의 Conflict(409) 와 유사, 종료된 채팅방임. 재개하기 후 재연결 시도해야함
 
 
 ### Status Socket 의 경우
