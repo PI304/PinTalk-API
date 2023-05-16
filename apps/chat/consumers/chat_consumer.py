@@ -40,7 +40,7 @@ class ChatConsumer(BaseJsonConsumer):
             logger.info("this chatroom is closed")
             await self.deny_connection(4009)
 
-        # (유효하다면) Guest 의 경우 origin 확인하고 is_closed = True 면 False 로 바꿈
+        # (유효하다면) Guest 의 경우 origin 확인하고 is_closed = True 면 False 로 바꾸고 DenyConnection
         if self.user_type == UserType.GUEST:
             is_valid_guest = await self.check_valid_guest()
             if not is_valid_guest:
@@ -51,6 +51,7 @@ class ChatConsumer(BaseJsonConsumer):
             self.guest = self.chatroom.guest
             if self.chatroom.is_closed:
                 await self.reopen_chatroom()
+                await self.deny_connection(4009)
 
         self.service = ChatConsumerService(
             self.room_group_name, self.chatroom, self.redis_conn
