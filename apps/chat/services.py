@@ -58,13 +58,23 @@ class RedisService:
         self.redis_conn.delete(key)
 
     @staticmethod
-    def datetime_str_to_score_format(datetime_str: str) -> str:
-        try:
-            datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S")
-        except ValueError:
-            raise ValueError("Incorrect data format, should be YYYY-MM-DDTHH:MM:SS")
+    def datetime_str_to_score_format(datetime_str: Optional[str] = None) -> str:
+        if datetime_str is None:
+            return datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
+        else:
+            try:
+                datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError:
+                raise ValueError(
+                    "Incorrect data format, should be YYYY-MM-DDTHH:MM:SS.s"
+                )
 
-        return datetime_str.replace("-", "").replace("T", "").replace(":", "")
+            return (
+                datetime_str.replace("-", "")
+                .replace("T", "")
+                .replace(":", "")
+                .replace(".", "")
+            )
 
 
 class ChatroomService(object):
@@ -143,18 +153,13 @@ class ChatConsumerService:
         starting_point: Optional[str] = None,
     ) -> List[dict]:
         if starting_point is None:
-            base_score = datetime.now().strftime("%Y%m%d%H%M%S")
+            base_score = RedisService.datetime_str_to_score_format()
         else:
             try:
-                starting_datetime = datetime.strptime(
-                    starting_point, "%Y-%m-%dT%H:%M:%S"
-                )
-                base_score = starting_datetime.strftime("%Y%m%d%H%M%S")
+                base_score = RedisService.datetime_str_to_score_format(starting_point)
                 base_score = str(int(base_score) - 1)
-            except ValueError:
-                raise InvalidInputException(
-                    "Incorrect data format, should be YYYY-MM-DDTHH:MM:SS"
-                )
+            except ValueError as e:
+                raise InvalidInputException(str(e))
 
         messages = self.redis_conn.zrevrangebyscore(
             self.group_name, base_score, "-inf", withscores=True, start=0, num=50

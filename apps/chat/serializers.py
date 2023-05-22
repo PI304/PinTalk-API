@@ -97,14 +97,14 @@ class ChatMessageInMemorySerializer(serializers.Serializer):
     )
     message = serializers.CharField(max_length=1000, min_length=1, required=True)
     is_host = serializers.BooleanField(required=True)
-    datetime = serializers.CharField(max_length=19, required=True)
+    datetime = serializers.CharField(max_length=23, required=True)
 
     class Meta:
         fields = ["type", "message", "is_host", "datetime"]
 
     def validate_datetime(self, value):
         try:
-            datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+            datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
         except ValueError:
-            raise ValueError("Incorrect data format, should be YYYY-MM-DDTHH:MM:SS")
+            raise ValueError("Incorrect data format, should be YYYY-MM-DDTHH:MM:SS.sss")
         return value
