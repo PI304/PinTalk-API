@@ -9,8 +9,7 @@
 4. [Checking Online Status](#4-checking-online-status)
 5. [Error Codes](#5-error-codes)
 6. [Checking New Messages](#6-checking-new-messages)
-7. [Email Notifications](#7-email-notifications)
-8. [Top-Fixing Chatrooms](#8-top-fixing-chatrooms)
+7. [Top-Fixing Chatrooms](#7-top-fixing-chatrooms)
 
 
 
@@ -38,7 +37,7 @@ PinTalk 서비스에서는 유저 정보를 제외한, 채팅과 관련된 사�
 {
    "type": "notice",
    "message": "closed",
-   "datetime": "2023-03-25T14:32:57",
+   "datetime": "2023-03-25T14:32:57.123",
    "is_host": true
 }
 ```
@@ -169,7 +168,7 @@ websocket 에 성공적으로 연결되기 위해선 credential 확인이 필요
 const getDatetime = () => {
    const now = new Date();
    now.setHours(now.getHours() + 9);
-   const dateStr = now.toISOString().substring(0, 19);
+   const dateStr = now.toISOString().substring(0, 23);
 
    return dateStr;
 }
@@ -194,7 +193,8 @@ chatSocket.onmessage = function(e) {
   - ```notice```: 상태 확인 등 알림의 성질을 띠는 메시지
   - ```request```: 서버에 특정 자원을 요청하는 메시지
 - ```is_host```: 메시지를 작성한 주체를 명시합니다. ```true``` 일 경우, 사용자가 작성한 메시지이며, ```false``` 인 경우 게스트가 작성한 메시지입니다.
-- ```datetime```: 메시지를 보낸 시각이 ```%T-%m-%dT-%H:%M:%S``` 형태로 담겨 있습니다.
+  - ```datetime```: 메시지를 보낸 시각이 ```%T-%m-%dT-%H:%M:%S.%f``` 형태로 담겨 있습니다.
+  >   메시지를 보낸 시각은 다른 메시지의 전송 시각과 최대한 겹치지 않게 하기 위해서 밀리세컨드까지의 정보를 포함하도록 합니다. 위 ```getDatetime``` 함수를 이용하면 소수점 세자리까지의 밀리세컨드 정보를 담을 수 있습니다.
 - ```message```: 실제 메시지의 내용입니다.
 
 > ```notice``` 타입의 메시지는 online status 확인용 웹소켓에서 주로 쓰입니다. [4. Checking Online Status](#4-checking-online-status) 섹션을 확인하세요.
@@ -209,8 +209,8 @@ chatSocket.onmessage = function(e) {
 {
   "type": "request",
   "is_host": true,
-  "message": "2023-03-15T20:13:77",
-  "datetime": "2023-03-23T08:15:77"
+  "message": "2023-03-15T20:13:77.123",
+  "datetime": "2023-03-23T08:15:77.123"
 }
 ```
 ```datetime``` 필드는 채팅 메시지와 동일하게 해당 요청을 보내는 시간을 담는 것이며 ```message``` 필드에는
@@ -225,7 +225,7 @@ chatSocket.onmessage = function(e) {
   "type": "chat_message",
   "is_host": true,
   "message": "hi",
-  "datetime": "2023-03-23T08:15:77"
+  "datetime": "2023-03-23T08:15:77.123"
 }
 ```
 
@@ -233,9 +233,9 @@ chatSocket.onmessage = function(e) {
 ```json 
 {
   "data": [
-    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77"},
-    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77"},
-    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77"},
+    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77.123"},
+    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77.123"},
+    { "type": "chat_message", "is_host": true, "message": "hi", "datetime": "2023-03-23T08:15:77.123"},
   ],
   "type": "chat_message"
 }
@@ -264,7 +264,7 @@ chatSocket.send(JSON.stringify({
   "type": "notice",
   "is_host": true,
   "message": "closed",
-  "datetime": "2023-03-23T08:15:77"
+  "datetime": "2023-03-23T08:15:77.123"
 }
 ```
 > ⚠️ 종료된 채팅방에 소켓 연결을 시도하면, 4009 소켓 에러가 반환됩니다.
@@ -291,7 +291,7 @@ chatSocket.send(JSON.stringify({
   "type": "notice",
   "is_host": false,
   "message": "online",
-  "datetime": "2023-03-23T08:15:77"
+  "datetime": "2023-03-23T08:15:77.123"
 }
 ```
 
@@ -344,14 +344,9 @@ chatSocket.onopen = () => {
 
 
 ```latestMsgAt``` 의 시간이 ```lastCheckedAt``` 의 시간보다 더 최근의 시간일 경우,
-사용자가 확인하지 않은 새로운 메시지가 도착했다는 것을 의미합니다. 
+사용자가 확인하지 않은 새로운 메시지가 도착했다는 것을 의미합니다.
 
 
-## 7. Email Notifications
-게스트나 사용자가 채팅방에 입장해있는 상태가 아닐 때 메시지가 도착한다면 이메일을 보냅니다. 
-
-*이 피처는 추후 추가 예정입니다.*
-
-## 8. Top-Fixing Chatrooms
+## 7. Top-Fixing Chatrooms
 유저는 **총 5개**까지의 채팅방을 상단 고정할 수 있습니다. 상단 고정을 하는 기능은 백엔드 서버를 통해서 
 수행하는 것이 아닌, **프론트엔드에서 로컬 스토리지나 쿠키를 이용해서 구현**하도록 합니다.

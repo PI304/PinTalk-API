@@ -94,10 +94,14 @@ class ChatConsumer(BaseJsonConsumer):
     # Receive message from WebSocket
     async def receive_json(self, content, **kwargs):
         if content["type"] == "request":
+            request_msg_datetime = content.get("message", None)
+            if request_msg_datetime is None or len(request_msg_datetime) != 23:
+                await self.deny_connection(4000)
+
             try:
                 past_messages = self.service.get_past_messages(
                     is_ascending=False,
-                    starting_point=content.get("message", None),
+                    starting_point=request_msg_datetime,
                 )
                 await self.channel_layer.group_send(
                     self.room_group_name,
