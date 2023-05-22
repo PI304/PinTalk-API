@@ -13,7 +13,7 @@ class TimeStampMixin(models.Model):
     """
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         abstract = True
@@ -25,6 +25,7 @@ class SoftDeleteMixin(models.Model):
     """
 
     is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True)
 
     class Meta:
         abstract = True
@@ -64,12 +65,17 @@ class UserManager(BaseUserManager):
         Create and save a SuperUser with the given email and password.
         """
         extra_fields.setdefault("is_superuser", True)
-        extra_fields.setdefault("is_deleted", False)
+        # extra_fields.setdefault("is_deleted", False)
 
         # TODO: more details on access key and secret key
-        extra_fields.setdefault("access_key", base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf8').rstrip('=\n'))
+        extra_fields.setdefault(
+            "access_key",
+            base64.urlsafe_b64encode(uuid.uuid4().bytes).decode("utf8").rstrip("=\n"),
+        )
         extra_fields.setdefault("secret_key", secrets.token_hex(32))
-        extra_fields.setdefault("service_name", "Chat Box")
+        extra_fields.setdefault("service_name", "Pintalk")
+        extra_fields.setdefault("profile_name", "Pintalk")
+        extra_fields.setdefault("service_expl", "put a pin")
 
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
@@ -77,24 +83,59 @@ class UserManager(BaseUserManager):
         return self.create_user(email=email, password=password, **extra_fields)
 
 
-class User(AbstractBaseUser, TimeStampMixin, SoftDeleteMixin, PermissionsMixin):
+def modify_profile_image_filename(instance, filename):
+    return f"user_profiles/{str(uuid.uuid4())}"
+
+
+class User(AbstractBaseUser, TimeStampMixin, PermissionsMixin, SoftDeleteMixin):
     id = models.BigAutoField(primary_key=True)
     email = models.EmailField(max_length=64, unique=True, null=False)
+    uuid = models.CharField(max_length=22, null=False)
     access_key = models.CharField(max_length=22, null=False, blank=False)
     secret_key = models.CharField(max_length=64, null=False, blank=False)
     service_name = models.CharField(max_length=50, null=False, blank=False)
+    service_domain = models.CharField(max_length=200, null=True, blank=False)
     service_expl = models.CharField(max_length=200, null=False, blank=False)
+    profile_name = models.CharField(max_length=50, null=False, blank=True, default="")
+    description = models.CharField(max_length=200, null=True, blank=True, default="")
+    profile_image = models.ImageField(
+        blank=False, null=True, upload_to=modify_profile_image_filename
+    )
+
+    is_staff = models.BooleanField(
+        default=False,
+        help_text="Designates whether the user can log into this admin site.",
+    )
 
     objects = UserManager()
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["service_name", "service_expl"]
+    REQUIRED_FIELDS = ["profile_name", "service_name", "service_expl"]
 
     class Meta:
         db_table = "user"
         unique_together = ["email"]
 
+    def __str__(self):
+        return f"[{self.id}] {self.get_username()}"
+
+    def __repr__(self):
+        return f"User({self.id}, {self.get_username()})"
 
 
+class UserConfiguration(TimeStampMixin):
+    id = models.BigAutoField(primary_key=True)
+    user = models.OneToOneField(
+        User, null=False, on_delete=models.CASCADE, related_name="configs"
+    )
+    use_online_status = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = "user_config"
+
+    def __str__(self):
+        return f"[{self.id}] user({self.user_id})"
+
+    def __repr__(self):
+        return f"UserConfig({self.id}, {self.user_id})"

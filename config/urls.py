@@ -13,9 +13,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls.static import static
 from django.http import HttpResponse
-from django.shortcuts import render
 from django.urls import re_path, include, path
+
+from config import settings
 
 
 def health_check_view(request):
@@ -24,7 +26,5 @@ def health_check_view(request):
 
 urlpatterns = [
     path("health-check", health_check_view, name="health-check"),
-    path("", include("apps.user.html_urls")),
     re_path(r"^api/", include("config.api_urls_v1")),
-    path("__reload__/", include("django_browser_reload.urls")),
 ]

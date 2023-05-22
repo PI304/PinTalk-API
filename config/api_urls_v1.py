@@ -13,11 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
 from django.urls import path, include, re_path
-from django.utils.decorators import method_decorator
 from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.request import Request
@@ -25,9 +22,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 api_info = openapi.Info(
-    title="ChatBox - API Doc",
+    title="PinTalk - API Doc",
     default_version="v1",
-    description="ChatBox Application을 위한 API 문서\nAcceptHeader Versioning 을 사용합니다.",
+    description="PinTalk Application을 위한 API 문서\nAcceptHeader Versioning 을 사용합니다.",
     terms_of_service="https://www.google.com/policies/terms/",
     contact=openapi.Contact(email="earthlyz9.dev@gmail.com"),
 )
@@ -48,8 +45,9 @@ def hello_world(request: Request) -> Response:
 
 urlpatterns = [
     path("", hello_world),
-    path("admin/", admin.site.urls),
-    # path("users/", include("apps.user.urls")),
+    path("auth/", include("apps.user.auth_urls")),
+    path("users/", include("apps.user.urls")),
+    path("chat/", include("apps.chat.urls")),
     path("api-auth/", include("rest_framework.urls")),
 ]
 
