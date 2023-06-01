@@ -63,10 +63,8 @@ class ChatConsumer(BaseJsonConsumer):
             await self.accept()
 
             if self.user_type == UserType.GUEST:
-                print(f"Anonymous guest <{self.user}> joined the chat room")
                 logger.info(f"Anonymous guest <{self.user}> joined the chat room")
             else:
-                print(f"Registered user <{self.user.email}> joined the chat room")
                 logger.info(f"Registered user <{self.user}> joined the chat room")
 
             # latest messages, max 50

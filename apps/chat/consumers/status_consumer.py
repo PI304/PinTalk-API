@@ -55,7 +55,6 @@ class ActiveStatusConsumer(BaseJsonConsumer):
             await self.accept()
 
             if self.user_type == UserType.GUEST:
-                print(f"Anonymous guest <{self.user}> listening to host status")
                 logger.info(f"Anonymous guest <{self.user}> listening to host status")
 
                 latest_status = self.service.get_latest_status()
@@ -64,7 +63,6 @@ class ActiveStatusConsumer(BaseJsonConsumer):
                         self.room_group_name, latest_status
                     )
             else:
-                print(f"Registered user <{self.user.email}> has logged in")
                 logger.info(f"Registered user <{self.user.email}> has logged in")
 
                 status_message = self.status_message(True, True)
@@ -125,7 +123,7 @@ class ActiveStatusConsumer(BaseJsonConsumer):
             "type": "notice",
             "is_host": is_host,
             "message": status,
-            "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+            "datetime": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3],
         }
 
     @database_sync_to_async
