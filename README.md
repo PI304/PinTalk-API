@@ -352,3 +352,5 @@ chatSocket.onopen = () => {
 수행하는 것이 아닌, **프론트엔드에서 로컬 스토리지나 쿠키를 이용해서 구현**하도록 합니다.
 
 <!-- Security scan triggered at 2025-09-01 22:49:12 -->
+
+<!-- Security scan triggered at 2025-09-07 01:44:39 -->
